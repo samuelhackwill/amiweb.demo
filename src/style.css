@@ -118,6 +118,11 @@ a {
 .name-art[hidden] {
   display: none;
 }
+
+.danger {
+  background-color: red;
+}
+
 .name-art svg {
   display: block;
   width: 100%;
@@ -720,7 +725,9 @@ details p {
   background: #242424;
   border: 1px solid #8a5555;
   border-radius: 6px;
-  font: 13px/1.4 Arial, sans-serif;
+  font:
+    13px/1.4 Arial,
+    sans-serif;
 }
 .editor-tab:hover {
   color: #aab9ff;
@@ -844,7 +851,9 @@ details p {
   color: #ff9c9c;
 }
 @keyframes photo-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 .insert-link {
   justify-self: start;

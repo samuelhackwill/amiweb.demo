@@ -497,13 +497,15 @@ function friseMarkup() {
   const timeline = person.timeline
   const now = currentYear()
   const selectedProjectIds = new Set(person.projects)
-  const creations = projectDateData.projects.filter((project) => project.firstDate).map((project) => {
-    const date = new Date(`${project.firstDate}T00:00:00Z`)
-    const year = date.getUTCFullYear()
-    const yearStart = Date.UTC(year, 0, 1)
-    const nextYear = Date.UTC(year + 1, 0, 1)
-    return { ...project, yearPosition: year + (date.getTime() - yearStart) / (nextYear - yearStart) }
-  })
+  const creations = projectDateData.projects
+    .filter((project) => project.firstDate)
+    .map((project) => {
+      const date = new Date(`${project.firstDate}T00:00:00Z`)
+      const year = date.getUTCFullYear()
+      const yearStart = Date.UTC(year, 0, 1)
+      const nextYear = Date.UTC(year + 1, 0, 1)
+      return { ...project, yearPosition: year + (date.getTime() - yearStart) / (nextYear - yearStart) }
+    })
   const creationYears = creations.map((project) => project.yearPosition)
   const startYear = Math.min(FRISE_START_YEAR, ...creationYears.map(Math.floor))
   const endYear = Math.ceil(Math.max(now, startYear + 3, ...timeline.periods.map((period) => period.end ?? now), ...creationYears))
@@ -628,7 +630,7 @@ function editorMarkup() {
     <div class="editor-repeat"><div class="editor-row-title"><strong>Liens</strong><button type="button" data-add="links">Ajouter un lien</button></div>${person.links.map(([label, href], index) => `<div class="repeat-card two"><input data-list="links" data-index="${index}" data-part="0" value="${escapeHtml(label)}" /><input data-list="links" data-index="${index}" data-part="1" value="${escapeHtml(href)}" /><button type="button" data-remove="links" data-index="${index}">Supprimer</button></div>`).join("")}</div>
     <div class="editor-repeat"><div class="editor-row-title"><strong>Projets</strong></div>${projectOptions.map((project) => `<label class="check-row"><input type="checkbox" data-project="${project.id}" ${person.projects.includes(project.id) ? "checked" : ""} /> <span>${escapeHtml(project.name)}</span></label>`).join("")}</div>
     ${friseEditorMarkup()}
-    <div class="editor-actions"><span class="save-status" data-save-status>${escapeHtml(saveStatusText)}</span><button type="button" data-action="reset">Réinitialiser ce profil</button></div>`
+    <div class="editor-actions danger"><span class="save-status" data-save-status>${escapeHtml(saveStatusText)}</span><button type="button" data-action="reset">Réinitialiser ce profil</button></div>`
 }
 
 function pageMarkup() {
