@@ -2,48 +2,54 @@ import { createClient } from "@supabase/supabase-js"
 import projectDateData from "./data/project-first-dates.json"
 import "./style.css"
 
-const nameAssetFiles = import.meta.glob("./svg assets/name=*.svg", { eager: true, query: "?url", import: "default" })
+const nameAssetFiles = import.meta.glob("./svg assets/name=*.svg", { query: "?raw", import: "default" })
 const normalizeName = (value) =>
   value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "")
-const nameAssets = Object.entries(nameAssetFiles).flatMap(([path, url]) => {
+const nameAssets = Object.entries(nameAssetFiles).flatMap(([path, load]) => {
   const match = path.match(/name=([^,]+), alignment=([^.]*)\.svg$/)
-  return match ? [{ key: normalizeName(match[1]), alignment: match[2], url }] : []
+  return match ? [{ id: path, key: normalizeName(match[1]), alignment: match[2], load }] : []
 })
+const nameAssetSources = new Map(nameAssets.map(({ id, load }) => [id, load]))
 const inlineNameAssets = new Map()
-async function inlineNameAsset(source) {
-  if (!inlineNameAssets.has(source))
+async function inlineNameAsset(loadSource) {
+  if (!inlineNameAssets.has(loadSource))
     inlineNameAssets.set(
-      source,
-      (async () => {
-        const response = await fetch(source)
-        if (!response.ok) throw new Error(`Unable to load name SVG: ${response.status}`)
-        const svg = new DOMParser().parseFromString(await response.text(), "image/svg+xml").documentElement
+      loadSource,
+      loadSource().then((source) => {
+        const svgDocument = new DOMParser().parseFromString(source, "image/svg+xml")
+        if (svgDocument.querySelector("parsererror")) throw new Error("Invalid name SVG markup")
+        const svg = svgDocument.documentElement
         const viewBox = (svg.getAttribute("viewBox") || `0 0 ${svg.getAttribute("width")} ${svg.getAttribute("height")}`).trim().split(/[ ,]+/).map(Number)
-        const measureSvg = document.importNode(svg, true)
-        const container = document.createElement("div")
-        Object.assign(container.style, { position: "fixed", left: "-100000px", top: "0", visibility: "hidden", pointerEvents: "none" })
-        container.append(measureSvg)
-        document.body.append(container)
-        const bounds = measureSvg.getBBox()
-        container.remove()
         if (viewBox.length === 4 && viewBox.every(Number.isFinite)) {
-          const padding = 4
-          const left = Math.max(viewBox[0], bounds.x - padding)
-          const top = Math.max(viewBox[1], bounds.y - padding)
-          const right = Math.min(viewBox[0] + viewBox[2], bounds.x + bounds.width + padding)
-          const bottom = Math.min(viewBox[1] + viewBox[3], bounds.y + bounds.height + padding)
-          if (right > left && bottom > top) svg.setAttribute("viewBox", `${left} ${top} ${right - left} ${bottom - top}`)
+          const container = document.createElement("div")
+          const measureSvg = document.importNode(svg, true)
+          Object.assign(container.style, { position: "fixed", left: "-100000px", top: "0", opacity: "0", pointerEvents: "none" })
+          container.append(measureSvg)
+          document.body.append(container)
+          try {
+            const bounds = measureSvg.getBBox()
+            const padding = 4
+            const left = Math.max(viewBox[0], bounds.x - padding)
+            const top = Math.max(viewBox[1], bounds.y - padding)
+            const right = Math.min(viewBox[0] + viewBox[2], bounds.x + bounds.width + padding)
+            const bottom = Math.min(viewBox[1] + viewBox[3], bounds.y + bounds.height + padding)
+            if (right > left && bottom > top) svg.setAttribute("viewBox", `${left} ${top} ${right - left} ${bottom - top}`)
+          } catch (error) {
+            console.warn("Could not trim name SVG whitespace:", error)
+          } finally {
+            container.remove()
+          }
         }
         svg.setAttribute("preserveAspectRatio", "xMinYMid meet")
         svg.setAttribute("aria-hidden", "true")
         return new XMLSerializer().serializeToString(svg)
-      })(),
+      }),
     )
-  return inlineNameAssets.get(source)
+  return inlineNameAssets.get(loadSource)
 }
 function nameAssetFor(name) {
   const normalizedName = normalizeName(name)
@@ -54,7 +60,7 @@ function bindNameAssetInlining() {
   document.querySelectorAll(".identity .name-art[data-name-asset]").forEach((art) => {
     if (art.dataset.inlineRequested) return
     art.dataset.inlineRequested = "true"
-    inlineNameAsset(art.dataset.nameAsset)
+    inlineNameAsset(nameAssetSources.get(art.dataset.nameAsset))
       .then((svg) => {
         if (art.isConnected) art.innerHTML = svg
       })
@@ -443,7 +449,7 @@ function projectMarkup() {
 }
 function imageMarkup() {
   const asset = nameAssetFor(person.name)
-  return `${asset ? `<span class="name-art" data-name-asset="${asset.url}" role="img" aria-label="${escapeHtml(person.name)}"></span>` : ""}<span class="name-fallback"${asset ? " hidden" : ""}>${escapeHtml(person.name)}</span>`
+  return `${asset ? `<span class="name-art" data-name-asset="${escapeHtml(asset.id)}" role="img" aria-label="${escapeHtml(person.name)}"></span>` : ""}<span class="name-fallback"${asset ? " hidden" : ""}>${escapeHtml(person.name)}</span>`
 }
 function portraitMarkup() {
   return `<div class="portrait-wrap"><div class="portrait-mask${person.photo ? "" : " empty"}">${person.photo ? `<img src="${person.photo}" alt="Portrait de ${escapeHtml(person.name)}" />` : ""}</div></div>`
