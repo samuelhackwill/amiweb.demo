@@ -664,7 +664,7 @@ function bindEvents() {
     editorOpen = true
     render()
   })
-  document.querySelector(".editor-close").addEventListener("click", () => {
+  document.querySelector(".editor-close")?.addEventListener("click", () => {
     editorOpen = false
     render()
   })
