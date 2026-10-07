@@ -777,10 +777,16 @@ details p {
   cursor: pointer;
 }
 .editor-panel > label,
+.bio-editor-field,
 .editor-repeat {
   display: grid;
   gap: 7px;
   margin: 0 0 18px;
+  color: #bdbab4;
+  font-size: 12px;
+  font-weight: 700;
+}
+.bio-editor-field > label {
   color: #bdbab4;
   font-size: 12px;
   font-weight: 700;

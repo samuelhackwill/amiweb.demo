@@ -232,14 +232,14 @@ begin
   insert into public.bio_profile_edit_keys (slug)
   select profile.slug
   from public.bio_profiles as profile
-  on conflict (slug) do nothing;
+  on conflict on constraint bio_profile_edit_keys_pkey do nothing;
 
   return query
   select profile.slug,
          profile.data ->> 'name',
          rtrim(btrim(p_base_url), '/') || '/?person=' || profile.slug || '&edit=' || edit_key.edit_token::text
   from public.bio_profiles as profile
-  join public.bio_profile_edit_keys as edit_key using (slug)
+  join public.bio_profile_edit_keys as edit_key on edit_key.slug = profile.slug
   order by profile.data ->> 'name', profile.slug;
 end;
 $$;

@@ -188,7 +188,7 @@ Samuel Hackwill écrit une newsletter soi-disant biannuelle à [cette adresse](h
     photo: assetUrl("/assets/portrait.png"),
     bio: `Mathilde Maillard est artiste associée à l’Amicale de production. Son travail se développe entre production, accompagnement et création.
 
-Cette page est un exemple de profil éditable. Remplacez ce texte depuis le panneau d’édition pour tester les liens, l’*italique* et le **gras**.`,
+Cette page est un exemple de profil éditable. Remplacez ce texte depuis le panneau d’édition pour tester [les liens](https://exemple.com), l’*italique* et le **gras**.`,
     faq: [
       ["Quel est le rôle de Mathilde?", "Cette réponse peut être modifiée depuis le backoffice."],
       ["Sur quels projets travaille-t-elle?", "Une sélection de projets apparaît au bas de la page."],
@@ -233,7 +233,7 @@ function newProfile(slug) {
     nameAsset: "",
     photo: "",
     photoFilename: "",
-    bio: "Cette page est un exemple de profil éditable. Remplacez ce texte depuis le panneau d’édition pour tester [les liens](www.google.com), *l’italique* et le **gras**.",
+    bio: "Cette page est un exemple de profil éditable. Remplacez ce texte depuis le panneau d’édition pour tester [les liens](https://exemple.com), *l’italique* et le **gras**.",
     faq: [
       [`À quoi ressemblent les pièces de ${name}?`, "blablabla réponse à la question."],
       [`Est-ce que ${name} a travaillé avec d’autres personnes à l’Amicale ou ailleurs?`, "blablabla réponse à la question."],
@@ -627,7 +627,7 @@ function editorMarkup() {
   return `<div class="editor-head"><div><span class="editor-kicker">Demo backoffice</span><h2>${escapeHtml(person.name)}</h2></div><button class="editor-close" type="button" aria-label="Fermer">×</button></div>
     <label>Nom<input data-field="name" value="${escapeHtml(person.name)}" /></label>
     <label>Photo<input data-field="photoFile" type="file" accept="image/*" /><span class="photo-upload-filename" data-photo-filename>${escapeHtml(photoFilenameText)}</span><span class="photo-upload-status" data-photo-status data-loading="${photoStatusLoading}" role="status" aria-live="polite">${escapeHtml(photoStatusText)}</span></label>
-    <label>Bio <small>Mise en forme du texte = *italique*, **gras**, [lien hypertexte](www.google.com).</small><button class="insert-link" type="button" data-action="insert-link">Ajouter un lien</button><textarea data-field="bio" rows="13">${escapeHtml(person.bio)}</textarea></label>
+    <div class="bio-editor-field"><label for="bio-editor">Bio</label><small>Mise en forme du texte = *italique*, **gras**, [lien hypertexte](https://exemple.com).</small><button class="insert-link" type="button" data-action="insert-link">Ajouter un lien</button><textarea id="bio-editor" data-field="bio" rows="13">${escapeHtml(person.bio)}</textarea></div>
     <div class="editor-repeat"><div class="editor-row-title"><strong>FAQ</strong><button type="button" data-add="faq">Ajouter une question/réponse</button></div>${person.faq.map(([question, answer], index) => `<div class="repeat-card"><input data-list="faq" data-index="${index}" data-part="0" value="${escapeHtml(question)}" /><textarea data-list="faq" data-index="${index}" data-part="1" rows="3">${escapeHtml(answer)}</textarea><button type="button" data-remove="faq" data-index="${index}">Supprimer</button></div>`).join("")}</div>
     <div class="editor-repeat"><div class="editor-row-title"><strong>Contact</strong><button type="button" data-add="contact">Ajouter un contact</button></div>${person.contact.map(([label, href], index) => `<div class="repeat-card two"><input data-list="contact" data-index="${index}" data-part="0" value="${escapeHtml(label)}" /><input data-list="contact" data-index="${index}" data-part="1" value="${escapeHtml(href)}" /><button type="button" data-remove="contact" data-index="${index}">Supprimer</button></div>`).join("")}</div>
     <div class="editor-repeat"><div class="editor-row-title"><strong>Liens</strong><button type="button" data-add="links">Ajouter un lien</button></div>${person.links.map(([label, href], index) => `<div class="repeat-card two"><input data-list="links" data-index="${index}" data-part="0" value="${escapeHtml(label)}" /><input data-list="links" data-index="${index}" data-part="1" value="${escapeHtml(href)}" /><button type="button" data-remove="links" data-index="${index}">Supprimer</button></div>`).join("")}</div>
@@ -679,7 +679,7 @@ function bindEvents() {
     queueSave()
   })
   document.querySelector('[data-action="insert-link"]')?.addEventListener("click", () => {
-    const snippet = "[texte du lien](www.google.com)"
+    const snippet = "[texte du lien](https://exemple.com)"
     const start = bioField.selectionStart ?? bioField.value.length
     const end = bioField.selectionEnd ?? start
     bioField.value = `${bioField.value.slice(0, start)}${snippet}${bioField.value.slice(end)}`
