@@ -146,8 +146,6 @@ const projectOptions = [
   ["quadruple-et", "&&&&& & &&&"],
   ["cheval", "Cheval"],
 ].map(([id, name]) => ({ id, name }))
-const projectDates = new Map(projectDateData.projects.map((project) => [project.id, project]))
-
 const seedPeople = {
   samuel_hackwill: {
     slug: "samuel_hackwill",
@@ -498,16 +496,17 @@ function rockPath(x1, x2, y, seed) {
 function friseMarkup() {
   const timeline = person.timeline
   const now = currentYear()
-  const selectedProjects = person.projects.map((id) => projectDates.get(id)).filter((project) => project?.firstDate)
-  const projectYears = selectedProjects.map((project) => {
+  const selectedProjectIds = new Set(person.projects)
+  const creations = projectDateData.projects.filter((project) => project.firstDate).map((project) => {
     const date = new Date(`${project.firstDate}T00:00:00Z`)
     const year = date.getUTCFullYear()
     const yearStart = Date.UTC(year, 0, 1)
     const nextYear = Date.UTC(year + 1, 0, 1)
-    return year + (date.getTime() - yearStart) / (nextYear - yearStart)
+    return { ...project, yearPosition: year + (date.getTime() - yearStart) / (nextYear - yearStart) }
   })
-  const startYear = Math.min(FRISE_START_YEAR, ...projectYears.map(Math.floor))
-  const endYear = Math.ceil(Math.max(now, startYear + 3, ...timeline.periods.map((period) => period.end ?? now), ...projectYears))
+  const creationYears = creations.map((project) => project.yearPosition)
+  const startYear = Math.min(FRISE_START_YEAR, ...creationYears.map(Math.floor))
+  const endYear = Math.ceil(Math.max(now, startYear + 3, ...timeline.periods.map((period) => period.end ?? now), ...creationYears))
   const marginLeft = 18
   const layoutViewportWidth = window.innerWidth / 1.3
   const width = Math.max(280, Math.min(938, layoutViewportWidth - (layoutViewportWidth <= 800 ? 40 : 62)))
@@ -548,15 +547,11 @@ function friseMarkup() {
     .slice(0, -1)
     .map((from, segment) => `<clipPath id="frise-clip-${segment}"><rect x="${x(from)}" y="${y - 17}" width="${Math.max(1, x(boundaries[segment + 1]) - x(from))}" height="34" /></clipPath>`)
     .join("")
-  const stars = selectedProjects
+  const stars = creations
     .map((project) => {
-      const date = new Date(`${project.firstDate}T00:00:00Z`)
-      const year = date.getUTCFullYear()
-      const yearStart = Date.UTC(year, 0, 1)
-      const nextYear = Date.UTC(year + 1, 0, 1)
-      const position = year + (date.getTime() - yearStart) / (nextYear - yearStart)
+      const selected = selectedProjectIds.has(project.id)
       const name = projectOptions.find((option) => option.id === project.id)?.name ?? project.name
-      return `<path class="creation-marker" data-project-name="${escapeHtml(name)}" data-project-date="${project.firstDate}" d="${starPath(x(position), y)}" fill="#7890ff" stroke="#111" stroke-width="3.5" stroke-linejoin="round" tabindex="0" role="img" aria-label="${escapeHtml(name)}, première date ${project.firstDate}" aria-describedby="creation-tooltip" />`
+      return `<path class="creation-marker${selected ? " is-selected" : ""}" data-project-name="${escapeHtml(name)}" data-project-date="${project.firstDate}" d="${starPath(x(project.yearPosition), y)}" fill="#7890ff" opacity="${selected ? 1 : 0.3}" stroke="#111" stroke-width="3.5" stroke-linejoin="round" tabindex="0" role="img" aria-label="${escapeHtml(name)}, première date ${project.firstDate}" aria-describedby="creation-tooltip" />`
     })
     .join("")
   const legend = friseRoles.map((role) => `<span class="frise-legend-item"><i style="--role-color:${role.color}"></i>${escapeHtml(role.label)}</span>`).join("")
