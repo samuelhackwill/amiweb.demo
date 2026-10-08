@@ -654,7 +654,7 @@ function editorMarkup() {
     <div class="editor-repeat"><div class="editor-row-title"><strong>Liens</strong><button type="button" data-add="links">Ajouter un lien</button></div>${person.links.map(([label, href], index) => `<div class="repeat-card two"><input data-list="links" data-index="${index}" data-part="0" value="${escapeHtml(label)}" /><input data-list="links" data-index="${index}" data-part="1" value="${escapeHtml(href)}" /><button type="button" data-remove="links" data-index="${index}">Supprimer</button></div>`).join("")}</div>
     <div class="editor-repeat"><div class="editor-row-title"><strong>Projets</strong></div>${projectOptions.map((project) => `<label class="check-row"><input type="checkbox" data-project="${project.id}" ${person.projects.includes(project.id) ? "checked" : ""} /> <span>${escapeHtml(project.name)}</span></label>`).join("")}</div>
     ${friseEditorMarkup()}
-    <div class="editor-actions danger"><span class="save-status" data-save-status>${escapeHtml(saveStatusText)}</span><button type="button" data-action="reset">Réinitialiser ce profil</button></div>`
+    <div class="editor-actions"><span class="save-status" data-save-status>${escapeHtml(saveStatusText)}</span><button type="button" class="danger" data-action="reset">Réinitialiser ce profil</button></div>`
 }
 
 function pageMarkup() {
