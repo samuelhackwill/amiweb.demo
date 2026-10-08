@@ -645,7 +645,7 @@ function bindCreationTooltips() {
 }
 
 function editorMarkup() {
-  return `<div class="editor-head"><div><span class="editor-kicker">Demo backoffice</span><h2>${escapeHtml(person.name)}</h2></div><button class="editor-close" type="button" aria-label="Fermer">×</button></div>
+  return `<div class="editor-head"><div><h2>${escapeHtml(person.name)}</h2></div><button class="editor-close" type="button" aria-label="Fermer">×</button></div>
     <label>Nom<input data-field="name" value="${escapeHtml(person.name)}" /></label>
     <label>Photo<input data-field="photoFile" type="file" accept="image/*" /><span class="photo-upload-filename" data-photo-filename>${escapeHtml(photoFilenameText)}</span><span class="photo-upload-status" data-photo-status data-loading="${photoStatusLoading}" role="status" aria-live="polite">${escapeHtml(photoStatusText)}</span></label>
     <div class="bio-editor-field"><label for="bio-editor">Bio</label><small>Mise en forme du texte = *italique*, **gras**, [lien hypertexte](https://exemple.com).</small><button class="insert-link" type="button" data-action="insert-link">Ajouter un lien</button><textarea id="bio-editor" data-field="bio" rows="13">${escapeHtml(person.bio)}</textarea></div>

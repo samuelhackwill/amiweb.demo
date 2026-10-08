@@ -120,7 +120,7 @@ a {
 }
 
 .danger {
-  background-color: red;
+  background-color: red !important;
 }
 
 .name-art svg {
