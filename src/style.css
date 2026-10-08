@@ -437,13 +437,9 @@ details p {
   background: var(--role-color);
 }
 .frise-legend-item .frise-star {
-  width: auto;
-  height: auto;
-  color: #7890ff;
+  width: 16px;
+  height: 16px;
   background: none;
-  font-style: normal;
-  font-size: 16px;
-  line-height: 1;
 }
 .creation-tooltip {
   position: fixed;
@@ -468,6 +464,17 @@ details p {
 }
 .creation-marker {
   cursor: help;
+  stroke-width: 1px;
+  fill: #686868;
+  stroke: #cfcfcf;
+  mix-blend-mode: luminosity;
+}
+.creation-marker.is-selected {
+  fill: #fff;
+  stroke: #000;
+  stroke-width: 1.5px;
+  opacity: 1;
+  mix-blend-mode: normal;
 }
 .creation-marker:focus-visible {
   outline: 2px solid #fff;

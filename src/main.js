@@ -100,12 +100,12 @@ window.addEventListener("resize", () => {
   creationTooltip.hidden = true
 })
 const friseRoles = [
-  { id: "artiste", label: "Artiste associé", color: "#6d82ff", tier: 1 },
-  { id: "production", label: "Production", color: "#ff1717", tier: 1 },
-  { id: "administration", label: "Administration", color: "#ffe600", tier: 1 },
-  { id: "direction", label: "Direction", color: "#971fa8", tier: 2 },
-  { id: "regie", label: "Régie", color: "#55ef45", tier: 2 },
   { id: "collaborateur", label: "Collaborateur régulier", color: "#ff7eb6", tier: 2 },
+  { id: "artiste", label: "Artiste associé", color: "#6d82ff", tier: 1 },
+  { id: "direction", label: "Direction", color: "#971fa8", tier: 2 },
+  { id: "production", label: "Production / Diffusion", color: "#ff5817", tier: 1 },
+  { id: "administration", label: "Administration", color: "#ffe600", tier: 1 },
+  { id: "regie", label: "Régie", color: "#55ef45", tier: 2 },
 ]
 const projectCatalog = [
   { id: "tryhard", image: assetUrl("/assets/teye3.png"), title: assetUrl("/assets/project-title-tryhard.svg"), caption: "dates à venir à <strong>Grenoble</strong><br />et <strong>Saint-Médard en<br />Jalles.</strong>" },
@@ -435,16 +435,6 @@ function blobToDataUrl(blob) {
 function link(label, href = "#", extra = "") {
   return `<a class="link ${extra}" href="${href}" ${href.startsWith("#") ? "" : 'target="_blank" rel="noreferrer"'}>${label}</a>`
 }
-function projectMarkup() {
-  return person.projects
-    .map((id) => projectCatalog.find((project) => project.id === id))
-    .filter((project) => project?.image && project?.title)
-    .map(
-      (project) =>
-        `<article class="project"><div class="project-media"><div class="project-mask"><img src="${project.image}" alt="" /></div></div><div class="project-copy"><img class="project-title" src="${project.title}" alt="" />${project.caption ? `<p>${project.caption}</p>` : ""}</div></article>`,
-    )
-    .join("")
-}
 function imageMarkup() {
   const asset = nameAssetFor(person.name)
   return `${asset ? `<span class="name-art" data-name-asset="${escapeHtml(asset.id)}" role="img" aria-label="${escapeHtml(person.name)}"></span>` : ""}<span class="name-fallback"${asset ? " hidden" : ""}>${escapeHtml(person.name)}</span>`
@@ -476,7 +466,7 @@ function friseEditorMarkup() {
   </div>`
 }
 const CREATION_STAR_OUTER_RADIUS = 13
-const CREATION_STAR_MIN_GAP = CREATION_STAR_OUTER_RADIUS * 2 * 0.7
+const CREATION_STAR_MIN_GAP = CREATION_STAR_OUTER_RADIUS * 2 * 0.34
 
 function starPath(cx, cy, outer = CREATION_STAR_OUTER_RADIUS, inner = 5.5, points = 6) {
   return (
@@ -530,6 +520,7 @@ function rockPath(x1, x2, y, seed) {
 function friseMarkup() {
   const timeline = person.timeline
   const now = currentYear()
+  const selectedProjectIds = new Set(person.projects)
   const creations = projectDateData.projects
     .filter((project) => project.firstDate)
     .map((project) => {
@@ -583,14 +574,16 @@ function friseMarkup() {
     .slice(0, -1)
     .map((from, segment) => `<clipPath id="frise-clip-${segment}"><rect x="${x(from)}" y="${y - 17}" width="${Math.max(1, x(boundaries[segment + 1]) - x(from))}" height="34" /></clipPath>`)
     .join("")
-  const stars = creations
+  const stars = [...creations]
+    .sort((a, b) => creationPositions.get(a.id) - creationPositions.get(b.id))
     .map((project) => {
       const name = projectOptions.find((option) => option.id === project.id)?.name ?? project.name
-      return `<path class="creation-marker" data-project-name="${escapeHtml(name)}" data-project-date="${project.firstDate}" d="${starPath(creationPositions.get(project.id), y)}" fill="#7890ff" stroke="#111" stroke-width="3.5" stroke-linejoin="round" tabindex="0" role="img" aria-label="${escapeHtml(name)}, première date ${project.firstDate}" aria-describedby="creation-tooltip" />`
+      const selected = selectedProjectIds.has(project.id)
+      return `<path class="creation-marker${selected ? " is-selected" : ""}" data-project-name="${escapeHtml(name)}" data-project-date="${project.firstDate}" d="${starPath(creationPositions.get(project.id), y)}" stroke-linejoin="round" tabindex="0" role="img" aria-label="${escapeHtml(name)}, première date ${project.firstDate}" aria-describedby="creation-tooltip" />`
     })
     .join("")
   const legend = friseRoles.map((role) => `<span class="frise-legend-item"><i style="--role-color:${role.color}"></i>${escapeHtml(role.label)}</span>`).join("")
-  return `<section class="bio-frise" aria-label="Frise du parcours de ${escapeHtml(person.name)}"><div class="bio-frise-heading"><h2>Parcours à l’Amicale</h2><span>${escapeHtml(person.name)}</span></div><div class="bio-frise-scroll"><svg class="bio-frise-svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Frise du parcours de ${escapeHtml(person.name)} de ${startYear} à ${now}"><defs>${clips}</defs>${grid}${periodPaths}${stars}</svg></div><div class="bio-frise-legend">${legend}<span class="frise-legend-item"><i class="frise-star">★</i>Création</span></div></section>`
+  return `<section class="bio-frise" aria-label="Frise du parcours de ${escapeHtml(person.name)}"><div class="bio-frise-heading"><h2>Parcours à l’Amicale</h2><span>${escapeHtml(person.name)}</span></div><div class="bio-frise-scroll"><svg class="bio-frise-svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Frise du parcours de ${escapeHtml(person.name)} de ${startYear} à ${now}"><defs>${clips}</defs>${grid}${periodPaths}${stars}</svg></div><div class="bio-frise-legend">${legend}<span class="frise-legend-item"><svg class="frise-star" viewBox="0 0 16 16" aria-hidden="true"><path d="${starPath(8, 8, 7, 3.4, 6)}" fill="#fff" /></svg>Création</span></div></section>`
 }
 function faqMarkup() {
   return person.faq.map(([question, answer]) => `<details><summary>↓ ${escapeHtml(question)}</summary><div class="faq-answer">${renderMarkdown(answer)}</div></details>`).join("")
@@ -614,8 +607,6 @@ function refreshVisibleContent() {
   const sideSections = document.querySelectorAll(".sidebar .side-section.contact")
   if (sideSections[0]) sideSections[0].innerHTML = `<div class="section-title wide"><img src="${assetUrl("/assets/production.svg")}" alt="" /><span>contact :</span></div>${contactMarkup()}`
   if (sideSections[1]) sideSections[1].innerHTML = `<div class="section-title"><img src="${assetUrl("/assets/links.svg")}" alt="" /><span>liens :</span></div>${linksMarkup()}`
-  const projects = document.querySelector(".projects")
-  if (projects) projects.innerHTML = projectMarkup()
   const frise = document.querySelector(".bio-frise")
   if (frise) {
     frise.outerHTML = friseMarkup()
@@ -671,7 +662,6 @@ function pageMarkup() {
     <div class="body-content"><section class="intro" id="amicale"><div class="identity"><div class="logo-stack"><img class="logo-base" src="${assetUrl("/assets/logo-mark.svg")}" alt="" /><img class="logo-art" src="${assetUrl("/assets/logo.png")}" alt="L’Amicale" /></div>${imageMarkup()}</div><div class="bio">${renderMarkdown(person.bio)}</div></section>
     <aside class="sidebar">${portraitMarkup()}<section class="side-section faq-section"><div class="section-title"><img src="${assetUrl("/assets/faq.svg")}" alt="" /><span>FAQ :</span></div><div class="faq-list">${faqMarkup()}</div></section><section class="side-section contact"><div class="section-title wide"><img src="${assetUrl("/assets/production.svg")}" alt="" /><span>contact :</span></div>${contactMarkup()}</section><section class="side-section contact links-section"><div class="section-title"><img src="${assetUrl("/assets/links.svg")}" alt="" /><span>liens :</span></div>${linksMarkup()}</section></aside>
     ${friseMarkup()}</div>
-    <section class="projects" id="projects">${projectMarkup()}</section>
     <footer class="footer" id="footer"><div class="footer-newsletter"><div class="socials"><span>◎</span><span>●</span><span>▣</span></div><p>Au fait on a une newsletter semestrielle à laquelle vous pouvez vous inscrire ici (+5000 abonné·e·s) ↘</p><div class="fake-field">Adresse mail</div><div class="fake-input">jeanbob@gmail.com</div><div class="fake-field">Région / Pays</div><div class="fake-input">Hauts-de-France <span>⌄</span></div><div class="submit-button">Allez c’est parti</div></div><div class="footer-column"><strong>Navigation</strong>${["Accueil", "L’Amicale", "Calendrier", "Blog"].map((label) => link(label)).join("")}<br /><strong>Associés</strong>${["Julien Fournet", "Joaquim Fossi", "Samuel Hackwill", "Antoine Defoort", "Louise Siffert", "Sebastien Vial", "Sofia Teillet"].map((label) => link(label)).join("")}</div><div class="footer-column"><strong>Projets</strong>${projectCatalog.map((project) => link(project.id)).join("")}</div><div class="footer-column"><strong>Les thermes</strong>${["On va bâtir une île [...]", "Big Data Yoyo", "Le jeu de l’oie [...]", "Corps diplomatique", "Germinal", "Collectif Jambe", "Bonjour Concert", "Cheval"].map((label) => link(label)).join("")}</div><div class="footer-address"><div class="footer-address-text">L’Amicale<br />34 Rue Louis Bergot<br />59000 Lille</div><div class="footer-logo"><img class="footer-logo-bg" src="${assetUrl("/assets/footer-logo.svg")}" alt="" /><img class="footer-logo-art" src="${assetUrl("/assets/footer-logo.png")}" alt="L’Amicale" /></div></div><div class="footer-credits">admin ↗ ✉ Basile Lemasson　 co-direction ↗ ✉ Sebastien Vial &amp; Samuel Hackwill</div></footer>
     ${editAccessMessage ? `<p class="edit-access-message" role="status">${escapeHtml(editAccessMessage)}</p>` : ""}${editAuthorized ? `<button class="editor-tab" type="button" aria-expanded="${editorOpen}">Editer ce profil</button><aside class="editor-panel ${editorOpen ? "is-open" : ""}" aria-hidden="${!editorOpen}">${editorMarkup()}</aside>` : ""}</div>`
 }
