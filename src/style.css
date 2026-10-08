@@ -469,13 +469,16 @@ details p {
   stroke-width: 1px;
   fill: #686868;
   stroke: #cfcfcf;
-  mix-blend-mode: luminosity;
 }
 .creation-marker.is-selected {
   fill: #fff;
   stroke: #000;
   stroke-width: 1.5px;
   opacity: 1;
+  mix-blend-mode: normal;
+}
+.creation-marker.is-on-line {
+  fill: var(--creation-role-color);
   mix-blend-mode: normal;
 }
 .creation-marker:focus-visible {

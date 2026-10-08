@@ -579,7 +579,12 @@ function friseMarkup() {
     .map((project) => {
       const name = projectOptions.find((option) => option.id === project.id)?.name ?? project.name
       const selected = selectedProjectIds.has(project.id)
-      return `<path class="creation-marker${selected ? " is-selected" : ""}" data-project-name="${escapeHtml(name)}" data-project-date="${project.firstDate}" d="${starPath(creationPositions.get(project.id), y)}" stroke-linejoin="round" tabindex="0" role="img" aria-label="${escapeHtml(name)}, première date ${project.firstDate}" aria-describedby="creation-tooltip" />`
+      const activeRoles = validPeriods
+        .filter((period) => period.start <= project.yearPosition && project.yearPosition < period.end)
+        .sort((a, b) => (friseRoles.find((role) => role.id === a.role)?.tier ?? 1) - (friseRoles.find((role) => role.id === b.role)?.tier ?? 1))
+      const creationRole = activeRoles[0] && friseRoles.find((role) => role.id === activeRoles[0].role)
+      const classes = ["creation-marker", selected && "is-selected", creationRole && "is-on-line"].filter(Boolean).join(" ")
+      return `<path class="${classes}"${creationRole ? ` style="--creation-role-color:${creationRole.color}"` : ""} data-project-name="${escapeHtml(name)}" data-project-date="${project.firstDate}" d="${starPath(creationPositions.get(project.id), y)}" stroke-linejoin="round" tabindex="0" role="img" aria-label="${escapeHtml(name)}, première date ${project.firstDate}" aria-describedby="creation-tooltip" />`
     })
     .join("")
   const legend = friseRoles.map((role) => `<span class="frise-legend-item"><i style="--role-color:${role.color}"></i>${escapeHtml(role.label)}</span>`).join("")
