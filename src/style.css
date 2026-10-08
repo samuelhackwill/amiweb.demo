@@ -481,6 +481,9 @@ details p {
   fill: var(--creation-role-color);
   mix-blend-mode: normal;
 }
+.creation-marker.is-selected.is-on-line {
+  fill: #fff;
+}
 .creation-marker:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 3px;
