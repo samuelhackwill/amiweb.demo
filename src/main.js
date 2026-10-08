@@ -475,7 +475,10 @@ function friseEditorMarkup() {
     <button type="button" class="frise-add" data-frise-add>Ajouter une période</button>
   </div>`
 }
-function starPath(cx, cy, outer = 13, inner = 5.5, points = 6) {
+const CREATION_STAR_OUTER_RADIUS = 13
+const CREATION_STAR_MIN_GAP = CREATION_STAR_OUTER_RADIUS * 2 * 0.7
+
+function starPath(cx, cy, outer = CREATION_STAR_OUTER_RADIUS, inner = 5.5, points = 6) {
   return (
     Array.from({ length: points * 2 }, (_, index) => {
       const angle = -Math.PI / 2 + (index * Math.PI) / points
@@ -483,6 +486,37 @@ function starPath(cx, cy, outer = 13, inner = 5.5, points = 6) {
       return `${index ? "L" : "M"} ${(cx + Math.cos(angle) * radius).toFixed(2)} ${(cy + Math.sin(angle) * radius).toFixed(2)}`
     }).join(" ") + " Z"
   )
+}
+function spaceCreationMarkers(creations, x) {
+  const clusters = []
+  const packedBounds = (cluster) => {
+    const center = cluster.reduce((sum, creation) => sum + creation.x, 0) / cluster.length
+    const halfSpan = ((cluster.length - 1) * CREATION_STAR_MIN_GAP) / 2
+    return { center, left: center - halfSpan, right: center + halfSpan }
+  }
+
+  creations
+    .map((creation) => ({ ...creation, x: x(creation.yearPosition) }))
+    .sort((a, b) => a.x - b.x)
+    .forEach((creation) => {
+      clusters.push([creation])
+      while (clusters.length > 1) {
+        const leftIndex = clusters.length - 2
+        const left = clusters[leftIndex]
+        const right = clusters[leftIndex + 1]
+        if (packedBounds(right).left - packedBounds(left).right >= CREATION_STAR_MIN_GAP) break
+        clusters.splice(leftIndex, 2, [...left, ...right])
+      }
+    })
+
+  const positions = new Map()
+  clusters.forEach((cluster) => {
+    const { center } = packedBounds(cluster)
+    cluster.forEach((creation, index) => {
+      positions.set(creation.id, center + (index - (cluster.length - 1) / 2) * CREATION_STAR_MIN_GAP)
+    })
+  })
+  return positions
 }
 function rockPath(x1, x2, y, seed) {
   const length = x2 - x1
@@ -496,7 +530,6 @@ function rockPath(x1, x2, y, seed) {
 function friseMarkup() {
   const timeline = person.timeline
   const now = currentYear()
-  const selectedProjectIds = new Set(person.projects)
   const creations = projectDateData.projects
     .filter((project) => project.firstDate)
     .map((project) => {
@@ -517,6 +550,7 @@ function friseMarkup() {
   const height = 126
   const y = 79
   const x = (year) => marginLeft + (year - startYear) * scale
+  const creationPositions = spaceCreationMarkers(creations, x)
   const ticks = []
   for (let year = Math.ceil(startYear / 5) * 5; year <= endYear; year += 5) ticks.push(year)
   if (!ticks.includes(now)) ticks.push(now)
@@ -551,9 +585,8 @@ function friseMarkup() {
     .join("")
   const stars = creations
     .map((project) => {
-      const selected = selectedProjectIds.has(project.id)
       const name = projectOptions.find((option) => option.id === project.id)?.name ?? project.name
-      return `<path class="creation-marker${selected ? " is-selected" : ""}" data-project-name="${escapeHtml(name)}" data-project-date="${project.firstDate}" d="${starPath(x(project.yearPosition), y)}" fill="#7890ff" opacity="${selected ? 1 : 0.3}" stroke="#111" stroke-width="3.5" stroke-linejoin="round" tabindex="0" role="img" aria-label="${escapeHtml(name)}, première date ${project.firstDate}" aria-describedby="creation-tooltip" />`
+      return `<path class="creation-marker" data-project-name="${escapeHtml(name)}" data-project-date="${project.firstDate}" d="${starPath(creationPositions.get(project.id), y)}" fill="#7890ff" stroke="#111" stroke-width="3.5" stroke-linejoin="round" tabindex="0" role="img" aria-label="${escapeHtml(name)}, première date ${project.firstDate}" aria-describedby="creation-tooltip" />`
     })
     .join("")
   const legend = friseRoles.map((role) => `<span class="frise-legend-item"><i style="--role-color:${role.color}"></i>${escapeHtml(role.label)}</span>`).join("")
