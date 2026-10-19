@@ -650,7 +650,7 @@ function bindCreationTooltips() {
 }
 
 function editorMarkup() {
-  return `<div class="editor-head"><div><h2>${escapeHtml(person.name)}</h2></div><button class="editor-close" type="button" aria-label="Fermer">×</button></div>
+  return `<div class="editor-head"><div><h2>${escapeHtml(person.name)}</h2></div><button class="editor-close" type="button" aria-label="Fermer l’éditeur">×</button></div>
     <label>Nom<input data-field="name" value="${escapeHtml(person.name)}" /></label>
     <label>Photo<input data-field="photoFile" type="file" accept="image/*" /><span class="photo-upload-filename" data-photo-filename>${escapeHtml(photoFilenameText)}</span><span class="photo-upload-status" data-photo-status data-loading="${photoStatusLoading}" role="status" aria-live="polite">${escapeHtml(photoStatusText)}</span></label>
     <div class="bio-editor-field"><label for="bio-editor">Bio</label><small>Mise en forme du texte = *italique*, **gras**, [lien hypertexte](https://exemple.com).</small><button class="insert-link" type="button" data-action="insert-link">Ajouter un lien</button><textarea id="bio-editor" data-field="bio" rows="13">${escapeHtml(person.bio)}</textarea></div>
@@ -659,7 +659,8 @@ function editorMarkup() {
     <div class="editor-repeat"><div class="editor-row-title"><strong>Liens</strong><button type="button" data-add="links">Ajouter un lien</button></div>${person.links.map(([label, href], index) => `<div class="repeat-card two"><input data-list="links" data-index="${index}" data-part="0" value="${escapeHtml(label)}" /><input data-list="links" data-index="${index}" data-part="1" value="${escapeHtml(href)}" /><button type="button" data-remove="links" data-index="${index}">Supprimer</button></div>`).join("")}</div>
     <div class="editor-repeat"><div class="editor-row-title"><strong>Projets</strong></div>${projectOptions.map((project) => `<label class="check-row"><input type="checkbox" data-project="${project.id}" ${person.projects.includes(project.id) ? "checked" : ""} /> <span>${escapeHtml(project.name)}</span></label>`).join("")}</div>
     ${friseEditorMarkup()}
-    <div class="editor-actions"><span class="save-status" data-save-status>${escapeHtml(saveStatusText)}</span><button type="button" class="danger" data-action="reset">Réinitialiser ce profil</button></div>`
+    <div class="editor-actions"><span class="save-status" data-save-status>${escapeHtml(saveStatusText)}</span><button type="button" data-action="close-editor">Fermer l’onglet (sauvegarde automatique)</button></div>
+    <section class="editor-danger-zone" aria-labelledby="editor-danger-title"><h3 id="editor-danger-title">Zone de danger</h3><p>La réinitialisation remplace les modifications de ce profil par ses données d’exemple.</p><button type="button" class="danger editor-reset-start" data-action="show-reset-confirmation">Réinitialiser ce profil…</button><div class="reset-confirmation" data-reset-confirmation hidden><p>Cette action ne peut pas être annulée.</p><div class="reset-confirmation-actions"><button type="button" data-action="cancel-reset">Annuler</button><button type="button" class="danger" data-action="reset">Confirmer la réinitialisation</button></div></div></section>`
 }
 
 function pageMarkup() {
@@ -690,6 +691,10 @@ function bindEvents() {
     render()
   })
   document.querySelector(".editor-close")?.addEventListener("click", () => {
+    editorOpen = false
+    render()
+  })
+  document.querySelector('[data-action="close-editor"]')?.addEventListener("click", () => {
     editorOpen = false
     render()
   })
@@ -787,9 +792,26 @@ function bindEvents() {
       rerenderEditor()
     }),
   )
-  document.querySelector('[data-action="reset"]')?.addEventListener("click", async () => {
+  document.querySelector('[data-action="show-reset-confirmation"]')?.addEventListener("click", () => {
+    const confirmation = document.querySelector("[data-reset-confirmation]")
+    if (!confirmation) return
+    confirmation.hidden = false
+    confirmation.querySelector('[data-action="cancel-reset"]')?.focus()
+  })
+  document.querySelector('[data-action="cancel-reset"]')?.addEventListener("click", () => {
+    document.querySelector("[data-reset-confirmation]")?.setAttribute("hidden", "")
+    document.querySelector('[data-action="show-reset-confirmation"]')?.focus()
+  })
+  document.querySelector('[data-action="reset"]')?.addEventListener("click", async (event) => {
+    const button = event.currentTarget
+    button.disabled = true
+    button.textContent = "Réinitialisation…"
+    clearTimeout(saveTimer)
     person = normalizeProfile(clone(seedPeople[person.slug] || newProfile(person.slug)), person.slug)
-    await persistProfile()
+    const result = await persistProfile()
+    if (result.localSaved && result.supabaseSaved) saveStatusText = "Profil réinitialisé et synchronisé"
+    else if (result.localSaved) saveStatusText = supabase ? "Réinitialisé localement · échec Supabase" : "Profil réinitialisé · stockage local"
+    else saveStatusText = "Échec de la réinitialisation"
     editorOpen = true
     render()
   })
