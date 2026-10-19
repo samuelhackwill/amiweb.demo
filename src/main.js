@@ -661,9 +661,8 @@ function editorMarkup() {
     <div class="editor-repeat"><div class="editor-row-title"><strong>Liens</strong><button type="button" data-add="links">Ajouter un lien</button></div>${person.links.map(([label, href], index) => `<div class="repeat-card two"><input data-list="links" data-index="${index}" data-part="0" value="${escapeHtml(label)}" /><input data-list="links" data-index="${index}" data-part="1" value="${escapeHtml(href)}" /><button type="button" data-remove="links" data-index="${index}">Supprimer</button></div>`).join("")}</div>
     <div class="editor-repeat"><div class="editor-row-title"><strong>Projets</strong></div>${projectOptions.map((project) => `<label class="check-row"><input type="checkbox" data-project="${project.id}" ${person.projects.includes(project.id) ? "checked" : ""} /> <span>${escapeHtml(project.name)}</span></label>`).join("")}</div>
     ${friseEditorMarkup()}
-    <section class="editor-logs" aria-label="Logs de sauvegarde"><h3>Logs</h3><p class="save-status" data-save-status role="status" aria-live="polite">${escapeHtml(saveStatusText)}</p></section>
-    <div class="editor-actions"><button type="button" data-action="close-editor">Fermer l’onglet (sauvegarde automatique)</button></div>
-    <section class="editor-danger-zone" aria-labelledby="editor-danger-title"><h3 id="editor-danger-title">Zone de danger</h3><p>La réinitialisation remplace les modifications de ce profil par ses données d’exemple.</p><button type="button" class="danger editor-reset-start" data-action="show-reset-confirmation">Réinitialiser ce profil…</button><div class="reset-confirmation" data-reset-confirmation hidden><p>Cette action ne peut pas être annulée.</p><div class="reset-confirmation-actions"><button type="button" data-action="cancel-reset">Annuler</button><button type="button" class="danger" data-action="reset">Confirmer la réinitialisation</button></div></div></section>`
+    <section class="editor-danger-zone" aria-labelledby="editor-danger-title"><h3 id="editor-danger-title">Zone de danger</h3><p>La réinitialisation remplace les modifications de ce profil par ses données d’exemple.</p><button type="button" class="danger editor-reset-start" data-action="show-reset-confirmation">Réinitialiser ce profil…</button><div class="reset-confirmation" data-reset-confirmation hidden><p>Cette action ne peut pas être annulée.</p><div class="reset-confirmation-actions"><button type="button" data-action="cancel-reset">Annuler</button><button type="button" class="danger" data-action="reset">Confirmer la réinitialisation</button></div></div></section>
+    <section class="editor-logs" aria-label="Logs de sauvegarde"><h3>Logs</h3><p class="save-status" data-save-status role="status" aria-live="polite">${escapeHtml(saveStatusText)}</p></section>`
 }
 
 function pageMarkup() {
@@ -672,7 +671,7 @@ function pageMarkup() {
     <aside class="sidebar">${portraitMarkup()}<section class="side-section faq-section"${person.showFaq ? "" : " hidden"}><div class="section-title"><img src="${assetUrl("/assets/faq.svg")}" alt="" /><span>FAQ :</span></div><div class="faq-list">${faqMarkup()}</div></section><section class="side-section contact"><div class="section-title wide"><img src="${assetUrl("/assets/production.svg")}" alt="" /><span>contact :</span></div>${contactMarkup()}</section><section class="side-section contact links-section"><div class="section-title"><img src="${assetUrl("/assets/links.svg")}" alt="" /><span>liens :</span></div>${linksMarkup()}</section></aside>
     ${friseMarkup()}</div>
     <footer class="footer" id="footer"><div class="footer-newsletter"><div class="socials"><span>◎</span><span>●</span><span>▣</span></div><p>Au fait on a une newsletter semestrielle à laquelle vous pouvez vous inscrire ici (+5000 abonné·e·s) ↘</p><div class="fake-field">Adresse mail</div><div class="fake-input">jeanbob@gmail.com</div><div class="fake-field">Région / Pays</div><div class="fake-input">Hauts-de-France <span>⌄</span></div><div class="submit-button">Allez c’est parti</div></div><div class="footer-column"><strong>Navigation</strong>${["Accueil", "L’Amicale", "Calendrier", "Blog"].map((label) => link(label)).join("")}<br /><strong>Associés</strong>${["Julien Fournet", "Joaquim Fossi", "Samuel Hackwill", "Antoine Defoort", "Louise Siffert", "Sebastien Vial", "Sofia Teillet"].map((label) => link(label)).join("")}</div><div class="footer-column"><strong>Projets</strong>${projectCatalog.map((project) => link(project.id)).join("")}</div><div class="footer-column"><strong>Les thermes</strong>${["On va bâtir une île [...]", "Big Data Yoyo", "Le jeu de l’oie [...]", "Corps diplomatique", "Germinal", "Collectif Jambe", "Bonjour Concert", "Cheval"].map((label) => link(label)).join("")}</div><div class="footer-address"><div class="footer-address-text">L’Amicale<br />34 Rue Louis Bergot<br />59000 Lille</div><div class="footer-logo"><img class="footer-logo-bg" src="${assetUrl("/assets/footer-logo.svg")}" alt="" /><img class="footer-logo-art" src="${assetUrl("/assets/footer-logo.png")}" alt="L’Amicale" /></div></div><div class="footer-credits">admin ↗ ✉ Basile Lemasson　 co-direction ↗ ✉ Sebastien Vial &amp; Samuel Hackwill</div></footer>
-    ${editAccessMessage ? `<p class="edit-access-message" role="status">${escapeHtml(editAccessMessage)}</p>` : ""}${editAuthorized ? `<button class="editor-tab" type="button" aria-expanded="${editorOpen}">Editer ce profil</button><aside class="editor-panel ${editorOpen ? "is-open" : ""}" aria-hidden="${!editorOpen}">${editorMarkup()}</aside>` : ""}</div>`
+    ${editAccessMessage ? `<p class="edit-access-message" role="status">${escapeHtml(editAccessMessage)}</p>` : ""}${editAuthorized ? `<button class="editor-tab${editorOpen ? " is-open" : ""}" type="button" aria-expanded="${editorOpen}">${editorOpen ? "Fermer l’éditeur" : "Éditer la page"}</button><aside class="editor-panel ${editorOpen ? "is-open" : ""}" aria-hidden="${!editorOpen}">${editorMarkup()}</aside>` : ""}</div>`
 }
 
 function render() {
@@ -688,18 +687,22 @@ function rerenderEditor() {
   const panel = document.querySelector(".editor-panel")
   if (panel) panel.scrollTop = scrollTop
 }
+function setEditorOpen(open) {
+  editorOpen = open
+  const panel = document.querySelector(".editor-panel")
+  const tab = document.querySelector(".editor-tab")
+  panel?.classList.toggle("is-open", open)
+  panel?.setAttribute("aria-hidden", String(!open))
+  tab?.classList.toggle("is-open", open)
+  tab?.setAttribute("aria-expanded", String(open))
+  if (tab) tab.textContent = open ? "Fermer l’éditeur" : "Éditer la page"
+}
 function bindEvents() {
   document.querySelector(".editor-tab")?.addEventListener("click", () => {
-    editorOpen = true
-    render()
+    setEditorOpen(!editorOpen)
   })
   document.querySelector(".editor-close")?.addEventListener("click", () => {
-    editorOpen = false
-    render()
-  })
-  document.querySelector('[data-action="close-editor"]')?.addEventListener("click", () => {
-    editorOpen = false
-    render()
+    setEditorOpen(false)
   })
   document.querySelectorAll(".link").forEach((anchor) => anchor.addEventListener("click", (event) => event.preventDefault()))
   const bioField = document.querySelector('[data-field="bio"]')
@@ -823,6 +826,10 @@ function bindEvents() {
     render()
   })
 }
+
+document.addEventListener("click", (event) => {
+  if (editorOpen && !event.target.closest(".editor-panel, .editor-tab")) setEditorOpen(false)
+})
 
 render()
 Promise.all([hydrateFromSupabase(), verifyEditAccess()]).then(render)

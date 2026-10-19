@@ -714,7 +714,7 @@ details p {
 }
 .editor-tab {
   position: fixed;
-  z-index: 20;
+  z-index: 31;
   top: 50%;
   right: 0;
   padding: 12px 10px;
@@ -747,6 +747,13 @@ details p {
 .editor-tab:hover {
   color: #aab9ff;
   background: #242424;
+}
+.editor-tab.is-open {
+  top: 38.46vh;
+  right: min(430px, 100vw);
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0 8px 8px 0;
 }
 .editor-panel {
   position: fixed;
@@ -1017,24 +1024,6 @@ details p {
 .check-row input {
   accent-color: #6983ff;
 }
-.editor-actions {
-  display: grid;
-  gap: 9px;
-  padding-top: 4px;
-}
-.editor-actions button {
-  min-height: 40px;
-  color: #fff;
-  background: #4c65bb;
-  border: 0;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.editor-actions button + button {
-  color: #ffb1b1;
-  background: #303030;
-  border: 1px solid #815252;
-}
 .editor-danger-zone {
   margin-top: 24px;
   padding: 14px;
@@ -1091,5 +1080,13 @@ details p {
   }
   .editor-tab {
     font-size: 11px;
+  }
+}
+@media (max-width: 559px) {
+  .editor-tab.is-open {
+    right: 23.08vw;
+    left: auto;
+    border-left: 0;
+    border-right: 1px solid #5a5a5a;
   }
 }
