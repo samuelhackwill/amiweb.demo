@@ -865,6 +865,29 @@ details p {
 .save-status[data-state="error"] {
   color: #ff9c9c;
 }
+.editor-logs {
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px solid #353535;
+}
+.editor-logs h3 {
+  margin: 0 0 5px;
+  color: #777;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.editor-logs .save-status {
+  margin: 0;
+  color: #858585;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+.editor-logs .save-status[data-state="error"] {
+  color: #c47e7e;
+}
 @keyframes photo-spin {
   to {
     transform: rotate(360deg);
