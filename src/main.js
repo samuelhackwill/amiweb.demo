@@ -5,6 +5,7 @@ import { patateurLabel, syncPatateurs, destroyPatateurs } from "./patateur/index
 import { renderDemoPage } from "./site/pages.js"
 import { siteHeader, siteFooter, siteMenu, bindSiteInteractions } from "./site/shared.js"
 import "./style.css"
+import "./site/browser-colors.js"
 
 const nameAssetFiles = import.meta.glob("./svg assets/name=*.svg", { query: "?raw", import: "default" })
 const normalizeName = (value) =>

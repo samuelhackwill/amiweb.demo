@@ -83,3 +83,9 @@ The suggested label is cached in sessionStorage; a manual choice or previous
 newsletter selection in localStorage takes priority, including during a delayed
 lookup. Requests time out after four seconds and fall back silently. Only the
 label is cached, not the IP or full API response.
+
+`browser-colors.js` keeps the browser canvas and theme gray near the top and
+matches the footer gradient as it reaches the bottom of the visual viewport.
+Scroll, viewport resizing, content changes and footer expansion recalculate the
+color. The app content retains its own gray background; footerless pages remain
+gray. Region guessing is silent: no automatic-estimate helper text is displayed.

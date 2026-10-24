@@ -3,7 +3,7 @@
   --font-body: -apple-system, BlinkMacSystemFont, "SF Pro", "SF Pro Text", system-ui, sans-serif;
   --mobile-reading-size: 16px;
   font-family: var(--font-body);
-  background: #1b1b1b;
+  background: var(--browser-edge-color, #3a3a3a);
   color: #fff;
 }
 * {
@@ -17,7 +17,7 @@ html {
 }
 body {
   margin: 0;
-  background: #1b1b1b;
+  background: var(--browser-edge-color, #3a3a3a);
 }
 #app {
   zoom: 1.3;
