@@ -1,5 +1,9 @@
 import { createClient } from "@supabase/supabase-js"
 import projectDateData from "./data/project-first-dates.json"
+import { renderLamicalePage } from "./lamicale.js"
+import { patateurLabel, syncPatateurs, destroyPatateurs } from "./patateur/index.js"
+import { renderDemoPage } from "./site/pages.js"
+import { siteHeader, siteFooter, siteMenu, bindSiteInteractions } from "./site/shared.js"
 import "./style.css"
 
 const nameAssetFiles = import.meta.glob("./svg assets/name=*.svg", { query: "?raw", import: "default" })
@@ -440,7 +444,7 @@ function imageMarkup() {
   return `${asset ? `<span class="name-art" data-name-asset="${escapeHtml(asset.id)}" role="img" aria-label="${escapeHtml(person.name)}"></span>` : ""}<span class="name-fallback"${asset ? " hidden" : ""}>${escapeHtml(person.name)}</span>`
 }
 function portraitMarkup() {
-  return `<div class="portrait-wrap"><div class="portrait-mask${person.photo ? "" : " empty"}">${person.photo ? `<img src="${person.photo}" alt="Portrait de ${escapeHtml(person.name)}" />` : ""}</div></div>`
+  return `<div class="portrait-wrap"><div class="portrait-mask${person.photo ? "" : " empty"}" data-patateur-mask="bio-${escapeHtml(person.slug)}-portrait">${person.photo ? `<img src="${person.photo}" alt="Portrait de ${escapeHtml(person.name)}" />` : ""}</div></div>`
 }
 function currentYear() {
   return new Date().getFullYear()
@@ -602,7 +606,7 @@ function linksMarkup() {
 function refreshVisibleContent() {
   const bio = document.querySelector(".bio")
   if (bio) bio.innerHTML = renderMarkdown(person.bio)
-  const muted = document.querySelector(".muted")
+  const muted = document.querySelector(".nav-crumb")
   if (muted) muted.textContent = `→ ${person.name}`
   const identityName = document.querySelector(".identity .name-art, .identity .name-fallback")
   if (identityName) identityName.outerHTML = imageMarkup()
@@ -612,14 +616,17 @@ function refreshVisibleContent() {
   const faqSection = document.querySelector(".faq-section")
   if (faqSection) faqSection.hidden = person.showFaq === false
   const sideSections = document.querySelectorAll(".sidebar .side-section.contact")
-  if (sideSections[0]) sideSections[0].innerHTML = `<div class="section-title wide"><img src="${assetUrl("/assets/production.svg")}" alt="" /><span>contact :</span></div>${contactMarkup()}`
-  if (sideSections[1]) sideSections[1].innerHTML = `<div class="section-title"><img src="${assetUrl("/assets/links.svg")}" alt="" /><span>liens :</span></div>${linksMarkup()}`
+  if (sideSections[0]) sideSections[0].innerHTML = `${patateurLabel("contact :", "bio-contact", "section-title wide")}${contactMarkup()}`
+  if (sideSections[1]) sideSections[1].innerHTML = `${patateurLabel("liens :", "bio-links")}${linksMarkup()}`
+  syncPatateurs()
   const frise = document.querySelector(".bio-frise")
   if (frise) {
     frise.outerHTML = friseMarkup()
     bindCreationTooltips()
   }
-  document.querySelectorAll(".link").forEach((anchor) => anchor.addEventListener("click", (event) => event.preventDefault()))
+  document.querySelectorAll(".link").forEach((anchor) => anchor.addEventListener("click", (event) => {
+    if (anchor.getAttribute("href") === "#") event.preventDefault()
+  }))
 }
 
 function bindCreationTooltips() {
@@ -666,17 +673,31 @@ function editorMarkup() {
 }
 
 function pageMarkup() {
-  return `<div class="page"><header class="topbar">${link("Projets", "#projects")}${link("Calendrier", "#calendar")}<span>${link("L’Amicale", "#amicale")} <span class="muted">→ ${escapeHtml(person.name)}</span></span>${link("Blog", "#blog")}<span class="theme-button" aria-hidden="true"><img src="${assetUrl("/assets/theme.svg")}" alt="" /></span></header>
-    <div class="body-content"><section class="intro" id="amicale"><div class="identity"><div class="logo-stack"><img class="logo-base" src="${assetUrl("/assets/logo-mark.svg")}" alt="" /><img class="logo-art" src="${assetUrl("/assets/logo.png")}" alt="L’Amicale" /></div>${imageMarkup()}</div><div class="bio">${renderMarkdown(person.bio)}</div></section>
-    <aside class="sidebar">${portraitMarkup()}<section class="side-section faq-section"${person.showFaq ? "" : " hidden"}><div class="section-title"><img src="${assetUrl("/assets/faq.svg")}" alt="" /><span>FAQ :</span></div><div class="faq-list">${faqMarkup()}</div></section><section class="side-section contact"><div class="section-title wide"><img src="${assetUrl("/assets/production.svg")}" alt="" /><span>contact :</span></div>${contactMarkup()}</section><section class="side-section contact links-section"><div class="section-title"><img src="${assetUrl("/assets/links.svg")}" alt="" /><span>liens :</span></div>${linksMarkup()}</section></aside>
+  return `<div class="page">${siteHeader({ active: "amicale", crumb: person.name })}
+    <div class="body-content"><section class="intro" id="amicale"><div class="identity"><div class="logo-stack"><img class="logo-art" src="${assetUrl("/assets/logo.png")}" alt="L’Amicale" /></div>${imageMarkup()}</div><div class="bio">${renderMarkdown(person.bio)}</div></section>
+    <aside class="sidebar">${portraitMarkup()}<section class="side-section faq-section"${person.showFaq ? "" : " hidden"}>${patateurLabel("FAQ :", "bio-faq")}<div class="faq-list">${faqMarkup()}</div></section><section class="side-section contact">${patateurLabel("contact :", "bio-contact", "section-title wide")}${contactMarkup()}</section><section class="side-section contact links-section">${patateurLabel("liens :", "bio-links")}${linksMarkup()}</section></aside>
     ${friseMarkup()}</div>
-    <footer class="footer" id="footer"><div class="footer-newsletter"><div class="socials"><span>◎</span><span>●</span><span>▣</span></div><p>Au fait on a une newsletter semestrielle à laquelle vous pouvez vous inscrire ici (+5000 abonné·e·s) ↘</p><div class="fake-field">Adresse mail</div><div class="fake-input">jeanbob@gmail.com</div><div class="fake-field">Région / Pays</div><div class="fake-input">Hauts-de-France <span>⌄</span></div><div class="submit-button">Allez c’est parti</div></div><div class="footer-column"><strong>Navigation</strong>${["Accueil", "L’Amicale", "Calendrier", "Blog"].map((label) => link(label)).join("")}<br /><strong>Associés</strong>${["Julien Fournet", "Joaquim Fossi", "Samuel Hackwill", "Antoine Defoort", "Louise Siffert", "Sebastien Vial", "Sofia Teillet"].map((label) => link(label)).join("")}</div><div class="footer-column"><strong>Projets</strong>${projectCatalog.map((project) => link(project.id)).join("")}</div><div class="footer-column"><strong>Les thermes</strong>${["On va bâtir une île [...]", "Big Data Yoyo", "Le jeu de l’oie [...]", "Corps diplomatique", "Germinal", "Collectif Jambe", "Bonjour Concert", "Cheval"].map((label) => link(label)).join("")}</div><div class="footer-address"><div class="footer-address-text">L’Amicale<br />34 Rue Louis Bergot<br />59000 Lille</div><div class="footer-logo"><img class="footer-logo-bg" src="${assetUrl("/assets/footer-logo.svg")}" alt="" /><img class="footer-logo-art" src="${assetUrl("/assets/footer-logo.png")}" alt="L’Amicale" /></div></div><div class="footer-credits">admin ↗ ✉ Basile Lemasson　 co-direction ↗ ✉ Sebastien Vial &amp; Samuel Hackwill</div></footer>
-    ${editAccessMessage ? `<p class="edit-access-message" role="status">${escapeHtml(editAccessMessage)}</p>` : ""}${editAuthorized ? `<button class="editor-tab${editorOpen ? " is-open" : ""}" type="button" aria-label="${editorOpen ? "Fermer l’éditeur" : "Éditer la page"}" aria-expanded="${editorOpen}">Éditer la page</button><aside class="editor-panel ${editorOpen ? "is-open" : ""}" aria-hidden="${!editorOpen}">${editorMarkup()}</aside>` : ""}</div>`
+    ${siteFooter()}
+    ${editAccessMessage ? `<p class="edit-access-message" role="status">${escapeHtml(editAccessMessage)}</p>` : ""}${editAuthorized ? `<button class="editor-tab${editorOpen ? " is-open" : ""}" type="button" aria-label="${editorOpen ? "Fermer l’éditeur" : "Éditer la page"}" aria-expanded="${editorOpen}">Éditer la page</button><aside class="editor-panel ${editorOpen ? "is-open" : ""}" aria-hidden="${!editorOpen}">${editorMarkup()}</aside>` : ""}${siteMenu()}</div>`
 }
 
 function render() {
+  const params = new URLSearchParams(window.location.search)
+  const route = params.get("page") || (params.has("person") ? "bio" : "home")
+  if (route === "lamicale") {
+    renderLamicalePage()
+    return
+  }
+  if (route !== "bio") {
+    renderDemoPage(route)
+    return
+  }
+  document.title = `${person.name} — L’Amicale`
+  destroyPatateurs()
   document.querySelector("#app").innerHTML = pageMarkup()
+  syncPatateurs()
   bindEvents()
+  bindSiteInteractions(document.querySelector("#app"))
   bindCreationTooltips()
   bindNameAssetInlining()
 }
@@ -704,7 +725,9 @@ function bindEvents() {
   document.querySelector(".editor-close")?.addEventListener("click", () => {
     setEditorOpen(false)
   })
-  document.querySelectorAll(".link").forEach((anchor) => anchor.addEventListener("click", (event) => event.preventDefault()))
+  document.querySelectorAll(".link").forEach((anchor) => anchor.addEventListener("click", (event) => {
+    if (anchor.getAttribute("href") === "#") event.preventDefault()
+  }))
   const bioField = document.querySelector('[data-field="bio"]')
   document.querySelector('[data-field="name"]')?.addEventListener("input", (event) => {
     person.name = event.target.value
@@ -832,4 +855,4 @@ document.addEventListener("click", (event) => {
 })
 
 render()
-Promise.all([hydrateFromSupabase(), verifyEditAccess()]).then(render)
+if (queryParams.has("person") || queryParams.get("page") === "bio") Promise.all([hydrateFromSupabase(), verifyEditAccess()]).then(render)

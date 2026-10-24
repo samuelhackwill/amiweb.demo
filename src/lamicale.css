@@ -1,0 +1,362 @@
+.lamicale-page {
+  padding-bottom: 0;
+}
+.lamicale-page .topbar {
+  gap: 16px;
+}
+.lamicale-page .topbar .active {
+  color: #777;
+  pointer-events: none;
+}
+.lamicale-brand {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 72px;
+  margin: 19px 0 0 2px;
+}
+.lamicale-logo {
+  width: 64px;
+  height: 58px;
+  flex-shrink: 0;
+  padding: 0;
+}
+.lamicale-logo > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.lamicale-title {
+  display: block;
+  width: 543px;
+  height: 72px;
+  object-fit: contain;
+  object-position: left center;
+}
+.lamicale-content {
+  margin-top: 30px;
+  padding: 0 18px;
+}
+.amicale-top-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 558px) 251px;
+  gap: 55px;
+  align-items: start;
+  min-height: 465px;
+}
+.amicale-intro {
+  min-width: 0;
+  padding: 0 15px;
+}
+.amicale-intro > p {
+  margin: 0;
+  max-width: 529px;
+  font-size: 22px;
+  line-height: 1.16;
+}
+.amicale-faq {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 42px;
+}
+.amicale-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 31px;
+  padding: 7px 14px;
+  margin-bottom: 20px;
+  isolation: isolate;
+}
+.amicale-label span {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+.amicale-faq .amicale-label {
+  min-height: 29px;
+  margin: 0 0 0 12px;
+}
+.amicale-faq .amicale-label span {
+  font-size: 14px;
+}
+.amicale-faq details {
+  font-size: 17px;
+  line-height: 1.25;
+}
+.amicale-faq summary {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.amicale-faq summary::-webkit-details-marker {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .amicale-faq summary:hover {
+  color: #aab9ff;
+}
+}
+.amicale-faq details p {
+  margin: 9px 0 2px 20px;
+  color: #bfc1c4;
+  font-size: 15px;
+}
+.amicale-contacts {
+  padding-top: 0;
+  margin-top: -57px;
+}
+.amicale-contacts > section {
+  margin-bottom: 27px;
+}
+.amicale-contacts .amicale-label {
+  margin-bottom: 19px;
+}
+.amicale-contacts ul {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0 0 0 12px;
+  list-style: none;
+  font-size: 14px;
+}
+.amicale-contacts a {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .amicale-contacts a:hover {
+  color: #aab9ff;
+}
+}
+.amicale-group-photo {
+  width: 538px;
+  height: 514px;
+  margin: 50px 0 0;
+  overflow: hidden;
+}
+.amicale-group-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.amicale-people {
+  margin-top: 68px;
+}
+.people-caption {
+  margin: 0 0 13px 15px;
+  font-size: 14px;
+}
+.amicale-frise {
+  width: 100%;
+  margin-top: 90px;
+}
+.timeline-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 17px;
+  min-height: 28px;
+  margin-bottom: 7px;
+  color: #f4f4f4;
+  font-size: 13px;
+}
+.timeline-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+.timeline-legend-item i {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--role);
+}
+.timeline-legend-item .legend-creation {
+  width: 18px;
+  height: 18px;
+  background: none;
+  border: 1px solid #fff;
+  clip-path: polygon(50% 0%, 61% 34%, 98% 35%, 68% 57%, 79% 94%, 50% 71%, 21% 94%, 32% 57%, 2% 35%, 39% 34%);
+}
+.timeline-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-color: #777 #333;
+}
+.amicale-timeline {
+  display: block;
+  width: 100%;
+  min-width: 700px;
+  height: auto;
+  overflow: visible;
+}
+.amicale-timeline line {
+  stroke: #858585;
+  stroke-width: 1px;
+  opacity: .65;
+}
+.timeline-tick text {
+  fill: #aeb0b3;
+  font: 13px SFText, Arial, sans-serif;
+}
+.timeline-tick.is-now line {
+  stroke: #f4f1e9;
+  stroke-width: 2px;
+}
+.timeline-tick.is-now text {
+  fill: #fff;
+}
+.timeline-person-name {
+  font: 14px SFText, Arial, sans-serif;
+}
+.amicale-creation {
+  cursor: help;
+}
+.lamicale-footer {
+  position: relative;
+  min-height: 410px;
+  margin-top: 80px;
+  padding: 0 0 32px;
+}
+.incubation-note {
+  position: relative;
+  width: 237px;
+  min-height: 113px;
+  margin-left: 30px;
+  max-width: calc(100% - 30px);
+  padding: 18px 20px;
+}
+.incubation-note p {
+  position: relative;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.12;
+}
+.partners {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 48px 0 0 30px;
+}
+.partners img {
+  display: block;
+  width: auto;
+  height: 62px;
+  object-fit: contain;
+}
+.partners img:first-child {
+  width: 80px;
+  height: 61px;
+}
+.partners img:nth-child(2) {
+  width: 61px;
+  padding: 5px;
+  background: #fff;
+}
+.partners img:last-child {
+  width: 53px;
+}
+.site-credits {
+  margin: 30px 0 0 30px;
+  color: #fff;
+  font-size: 14px;
+}
+.site-credits p {
+  display: inline-block;
+  margin: 0;
+  padding: 10px 13px;
+  --patateur-fill: #555;
+}
+.site-credits span,
+.site-credits a {
+  color: #aab9ff;
+}
+.site-credits a {
+  text-decoration: none;
+}
+@media (max-width: 1040px) {
+  .lamicale-page .topbar {
+    gap: 10px;
+  }
+  .lamicale-content {
+    padding: 0;
+  }
+  .amicale-top-grid {
+    grid-template-columns: minmax(0, 1fr) 250px;
+    gap: 28px;
+    min-height: 0;
+  }
+  .amicale-intro {
+    padding: 0;
+  }
+  .amicale-intro > p {
+    font-size: 18px;
+  }
+  .amicale-group-photo {
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 1.05 / 1;
+  }
+
+}
+@media (max-width: 680px) {
+  .lamicale-brand {
+    gap: 12px;
+  }
+  .lamicale-logo {
+    width: 48px;
+    height: 48px;
+  }
+  .lamicale-title {
+    min-width: 0;
+    width: calc(100% - 60px);
+    height: 56px;
+  }
+  .amicale-top-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .amicale-contacts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 0;
+  }
+  .amicale-contacts > section:first-child {
+    grid-column: 1 / -1;
+  }
+  .amicale-group-photo {
+    width: 100%;
+    margin-top: 35px;
+  }
+  .amicale-people {
+    margin-top: 45px;
+  }
+  .amicale-frise {
+    margin-top: 55px;
+  }
+  .timeline-legend {
+    justify-content: flex-start;
+    font-size: 11px;
+  }
+  .lamicale-footer {
+    min-height: 340px;
+  }
+}

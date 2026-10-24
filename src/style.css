@@ -1,25 +1,27 @@
-@font-face {
-  font-family: SFText;
-  src: local("Helvetica Neue");
-}
 :root {
   color-scheme: dark;
-  font-family: SFText, Arial, sans-serif;
-  background: #3a3a3a;
+  --font-body: -apple-system, BlinkMacSystemFont, "SF Pro", "SF Pro Text", system-ui, sans-serif;
+  --mobile-reading-size: 16px;
+  font-family: var(--font-body);
+  background: #1b1b1b;
   color: #fff;
 }
 * {
   box-sizing: border-box;
+}
+[hidden] {
+  display: none !important;
 }
 html {
   scroll-behavior: smooth;
 }
 body {
   margin: 0;
-  background: #3a3a3a;
+  background: #1b1b1b;
 }
 #app {
   zoom: 1.3;
+  background: #3a3a3a;
 }
 button,
 a {
@@ -45,7 +47,12 @@ a {
   text-decoration: none;
   transition: color 0.18s ease;
 }
-.link:hover,
+@media (hover: hover) and (pointer: fine) {
+  .link:hover {
+  color: #aab9ff;
+  outline: none;
+}
+}
 .link:focus-visible {
   color: #aab9ff;
   outline: none;
@@ -67,8 +74,10 @@ a {
   filter: brightness(2);
   transition: transform 0.2s ease;
 }
-.theme-button:hover img {
+@media (hover: hover) and (pointer: fine) {
+  .theme-button:hover img {
   transform: rotate(35deg);
+}
 }
 .body-content {
   display: grid;
@@ -91,17 +100,14 @@ a {
   width: 64px;
   height: 64px;
   flex: 0 0 64px;
+  padding: 8px;
 }
-.logo-base,
 .logo-art {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
-}
-.logo-base {
-  z-index: 0;
 }
 .logo-art {
   z-index: 1;
@@ -172,28 +178,22 @@ a {
 }
 .portrait-mask {
   position: absolute;
-  inset: 0;
-  -webkit-mask-image: url("/assets/portrait-mask.svg");
-  mask-image: url("/assets/portrait-mask.svg");
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: 18px 5px;
-  mask-position: 18px 5px;
-  -webkit-mask-size: 184px 212px;
-  mask-size: 184px 212px;
+  left: 18px;
+  top: 5px;
+  width: 184px;
+  height: 212px;
   overflow: hidden;
 }
 .portrait-mask.empty {
   background: #b9d7ff;
 }
 .portrait-mask img {
-  position: absolute;
-  left: -5.5%;
-  top: -0.43%;
-  width: 111%;
-  height: 111%;
+  display: block;
+  width: 100%;
+  height: 100%;
   max-width: none;
   object-fit: cover;
+  object-position: center;
 }
 .side-section {
   margin: 0 0 38px;
@@ -203,27 +203,18 @@ a {
   position: relative;
   display: inline-flex;
   align-items: center;
-  height: 31px;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 31px;
+  padding: 7px 14px;
   margin-bottom: 20px;
-}
-.section-title img {
-  position: absolute;
-  left: 0;
-  width: 67px;
-  max-height: 31px;
 }
 .section-title span {
   position: relative;
-  margin-left: 14px;
   font-size: 16px;
   font-weight: 600;
-}
-.section-title.wide img {
-  width: 99px;
-  height: 31px;
-}
-.section-title.wide span {
-  margin-left: 11px;
+  line-height: 1.15;
 }
 .faq-list {
   display: flex;
@@ -244,8 +235,10 @@ summary {
 summary::-webkit-details-marker {
   display: none;
 }
-summary:hover {
+@media (hover: hover) and (pointer: fine) {
+  summary:hover {
   color: #aab9ff;
+}
 }
 details p {
   margin: 8px 0 0 18px;
@@ -270,7 +263,11 @@ details p {
   color: #6983ff;
   text-decoration: none;
 }
-.links-section .link:hover,
+@media (hover: hover) and (pointer: fine) {
+  .links-section .link:hover {
+  color: #fff;
+}
+}
 .links-section .link:focus-visible {
   color: #fff;
 }
@@ -299,20 +296,11 @@ details p {
 }
 .project-mask {
   position: absolute;
-  left: -21.08%;
-  top: 0;
-  width: 121.08%;
+  inset: 0;
+  width: 100%;
   height: 100%;
   overflow: hidden;
   background: #000;
-  -webkit-mask-image: url("/assets/project1.svg");
-  mask-image: url("/assets/project1.svg");
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: 30.63px 0.55px;
-  mask-position: 30.63px 0.55px;
-  -webkit-mask-size: 201.3px 179.82px;
-  mask-size: 201.3px 179.82px;
 }
 .project-mask img {
   position: absolute;
@@ -547,8 +535,7 @@ details p {
   margin: 17px auto 0;
   padding: 9px 8px;
   text-align: center;
-  background: #3a3a3a;
-  border-radius: 9px;
+  --patateur-fill: #3a3a3a;
 }
 .footer-column {
   display: flex;
@@ -560,7 +547,11 @@ details p {
   color: inherit;
   text-decoration: none;
 }
-.footer-link:hover,
+@media (hover: hover) and (pointer: fine) {
+  .footer-link:hover {
+  color: #aab9ff;
+}
+}
 .footer-link:focus-visible {
   color: #aab9ff;
 }
@@ -588,17 +579,14 @@ details p {
   width: 64px;
   height: 64px;
   overflow: hidden;
+  padding: 0;
 }
-.footer-logo-bg,
 .footer-logo-art {
   position: absolute;
   inset: 0;
   width: 64px;
   height: 64px;
   object-fit: contain;
-}
-.footer-logo-bg {
-  z-index: 0;
 }
 .footer-logo-art {
   z-index: 1;
@@ -745,9 +733,11 @@ details p {
     13px/1.4 Arial,
     sans-serif;
 }
-.editor-tab:hover {
+@media (hover: hover) and (pointer: fine) {
+  .editor-tab:hover {
   color: #aab9ff;
   background: #242424;
+}
 }
 .editor-tab.is-open {
   top: 38.46vh;
@@ -773,7 +763,7 @@ details p {
   box-shadow: -8px 0 28px rgba(0, 0, 0, 0.28);
   transform: translateX(105%);
   transition: transform 0.22s ease;
-  font-family: Arial, sans-serif;
+  font-family: var(--font-body);
 }
 .editor-panel.is-open {
   transform: translateX(0);
@@ -1090,4 +1080,23 @@ details p {
     border-left: 0;
     border-right: 1px solid #5a5a5a;
   }
+}
+
+/* The logo and its pale background are Figma artwork, never Patateur shapes. */
+.logo-stack, .footer-logo, .home-logo, .lamicale-logo {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+  padding: 0;
+}
+.logo-stack::before, .footer-logo::before, .home-logo::before, .lamicale-logo::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -10.53% -2.32% -8.58% -3.23%;
+  background: url("/assets/logo-background.svg") center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+.logo-stack::before, .home-logo::before, .lamicale-logo::before {
+  transform: scale(0.85);
 }
