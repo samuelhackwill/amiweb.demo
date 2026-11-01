@@ -52,7 +52,6 @@
   #app a.external-link:hover { color:var(--text-color,#fff); }
 }
 @media (min-width:681px) {
-  #app .upcoming-row a:hover { color:var(--link-color,#6983ff); text-decoration:none; }
   #app .calendar-event a.external-link:hover { color:var(--text-color,#fff); text-decoration:none; }
   #app .calendar-event a:not(.external-link):hover,
   #app .calendar-event .event-date:hover { color:var(--text-color,#fff); text-decoration:none; }
