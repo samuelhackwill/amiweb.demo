@@ -5,7 +5,7 @@
   gap: 16px;
 }
 .lamicale-page .topbar .active {
-  color: #777;
+  color: var(--text-muted,#777);
   pointer-events: none;
 }
 .lamicale-brand {
@@ -101,12 +101,12 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .amicale-faq summary:hover {
-  color: #aab9ff;
+  color: var(--link-hover,#aab9ff);
 }
 }
 .amicale-faq details p {
   margin: 9px 0 2px 20px;
-  color: #bfc1c4;
+  color: var(--text-muted,#bfc1c4);
   font-size: 15px;
 }
 .amicale-contacts {
@@ -129,13 +129,13 @@
   font-size: 14px;
 }
 .amicale-contacts a {
-  color: #fff;
+  color: var(--text-color,#fff);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 @media (hover: hover) and (pointer: fine) {
   .amicale-contacts a:hover {
-  color: #aab9ff;
+  color: var(--link-hover,#aab9ff);
 }
 }
 .amicale-group-photo {
@@ -170,7 +170,7 @@
   gap: 8px 17px;
   min-height: 28px;
   margin-bottom: 7px;
-  color: #f4f4f4;
+  color: var(--text-color,#f4f4f4);
   font-size: 13px;
 }
 .timeline-legend-item {
@@ -190,14 +190,14 @@
   width: 18px;
   height: 18px;
   background: none;
-  border: 1px solid #fff;
+  border: 1px solid var(--border-color,#fff);
   clip-path: polygon(50% 0%, 61% 34%, 98% 35%, 68% 57%, 79% 94%, 50% 71%, 21% 94%, 32% 57%, 2% 35%, 39% 34%);
 }
 .timeline-scroll {
   width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
-  scrollbar-color: #777 #333;
+  scrollbar-color: var(--border-color,#777) var(--card-bg,#333);
 }
 .amicale-timeline {
   display: block;
@@ -274,18 +274,18 @@
 }
 .site-credits {
   margin: 30px 0 0 30px;
-  color: #fff;
+  color: var(--text-color,#fff);
   font-size: 14px;
 }
 .site-credits p {
   display: inline-block;
   margin: 0;
   padding: 10px 13px;
-  --patateur-fill: #555;
+  --patateur-fill: var(--button-bg,#555);
 }
 .site-credits span,
 .site-credits a {
-  color: #aab9ff;
+  color: var(--link-hover,#aab9ff);
 }
 .site-credits a {
   text-decoration: none;

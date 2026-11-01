@@ -1,0 +1,50 @@
+/* All public FAQs follow the project-page typography and separators. */
+.faq-list,.amicale-faq { gap:0; }
+:is(.project-faq,.faq-list,.amicale-faq) details {
+  margin:0;
+  padding:18px 0;
+  font-size:22px;
+  line-height:1.2;
+}
+:is(.project-faq,.faq-list,.amicale-faq) details + details {
+  border-top:1px solid rgb(255 255 255 / .18);
+}
+html[data-theme="light"] :is(.project-faq,.faq-list,.amicale-faq) details + details {
+  border-color:rgb(36 37 33 / .18);
+}
+:is(.project-faq,.faq-list,.amicale-faq) summary,
+:is(.project-faq,.faq-list,.amicale-faq) summary:hover {
+  color:var(--text-color,#fff);
+  font-weight:500;
+  cursor:pointer;
+  list-style:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+:is(.project-faq,.faq-list,.amicale-faq) summary::-webkit-details-marker { display:none; }
+:is(.project-faq,.faq-list,.amicale-faq) details p,
+.faq-list .faq-answer {
+  margin:12px 0 0 18px;
+  color:var(--text-color,#fff);
+  font-size:inherit;
+  line-height:inherit;
+  font-weight:400;
+}
+.faq-list .faq-answer p { margin:0 0 12px; }
+.faq-list .faq-answer p:last-child { margin-bottom:0; }
+:is(.project-faq > .page-label,.faq-section > .section-title,.amicale-faq > .amicale-label) {
+  min-height:28px;
+  margin:0 0 16px;
+  padding:6px 13px;
+  font-size:16px;
+  font-weight:400;
+  line-height:1.1;
+}
+:is(.faq-section > .section-title,.amicale-faq > .amicale-label) span {
+  font-size:inherit;
+  font-weight:inherit;
+  line-height:inherit;
+}
+@media (max-width:680px) {
+  :is(.project-faq,.faq-list,.amicale-faq) details { padding:14px 0; font-size:16px; }
+}

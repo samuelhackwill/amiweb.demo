@@ -69,11 +69,13 @@ type RosterPerson = {
 type MultiWheelPrototypeProps = {
   items?: PersonItem[]
   compact?: boolean
+  desktopPortraitScale?: number
 }
 
 const props = withDefaults(defineProps<MultiWheelPrototypeProps>(), {
   items: () => [],
   compact: false,
+  desktopPortraitScale: 1,
 })
 
 const MIN_PEOPLE = 1
@@ -117,10 +119,19 @@ let angularVelocity = 0
 let snapFrameId: number | null = null
 let hoverReleaseTimer: ReturnType<typeof setTimeout> | null = null
 let dragPointerId: number | null = null
+let pointerStart: Point = { x: 0, y: 0 }
+const movedPointer = ref(false)
+let suppressPortraitClick = false
+let portraitTapHref: string | null = null
 const touchPointers = new Set<number>()
 let isPinching = false
 
 function trackPointerDown(event: PointerEvent) {
+  // A link preview can swallow pointerup/pointercancel. A new primary press
+  // starts a fresh gesture even if the browser left the previous one hanging.
+  if (event.isPrimary && (dragPointerId !== null || touchPointers.size > 0)) {
+    resetInterruptedGesture()
+  }
   if (event.pointerType !== 'touch') return
   touchPointers.add(event.pointerId)
   if (touchPointers.size > 1) {
@@ -134,11 +145,26 @@ function trackPointerEnd(event: PointerEvent) {
   if (touchPointers.size === 0) isPinching = false
 }
 
+function resetInterruptedGesture() {
+  touchPointers.clear()
+  isPinching = false
+  cancelSnap()
+  isSnapping.value = false
+  cancelPointerDrag()
+}
+
+function onVisibilityChange() {
+  if (document.hidden) resetInterruptedGesture()
+}
+
 // Finish at the nearest slot without inertia when the browser takes over a pinch.
 function cancelPointerDrag() {
+  suppressPortraitClick = true
+  portraitTapHref = null
   const pointerId = dragPointerId
   const wheelId = activeWheelId.value
   dragPointerId = null
+  movedPointer.value = false
   if (wheelId !== null && !isSnapping.value) {
     const steps = closestSnapSteps(dragRotation.value)
     wheelVectorRotations.value[wheelId] += steps * slotStep.value
@@ -169,6 +195,10 @@ onMounted(() => {
   document.addEventListener('pointerdown', trackPointerDown, { capture: true, passive: true })
   document.addEventListener('pointerup', trackPointerEnd, { capture: true, passive: true })
   document.addEventListener('pointercancel', trackPointerEnd, { capture: true, passive: true })
+  document.addEventListener('visibilitychange', onVisibilityChange)
+  window.addEventListener('blur', resetInterruptedGesture)
+  window.addEventListener('pagehide', resetInterruptedGesture)
+  window.addEventListener('pageshow', resetInterruptedGesture)
 })
 
 const circlePathData = parseSvgPath(vectorCircleSvg)
@@ -220,7 +250,7 @@ const compactLabelFontSize = computed(() => isMobile.value
   : 10)
 function updateMobile(event: MediaQueryListEvent) { isMobile.value = event.matches }
 onMounted(() => mobileMedia.addEventListener('change', updateMobile))
-const portraitScale = computed(() => Math.max(0.78, Math.min(1, 10 / slotCount.value)) * (props.compact && isMobile.value ? 1.76 : 1))
+const portraitScale = computed(() => Math.max(0.78, Math.min(1, 10 / slotCount.value)) * (props.compact && isMobile.value ? 1.76 : props.desktopPortraitScale))
 const portraitWidth = computed(() => PORTRAIT_WIDTH * portraitScale.value)
 const portraitHeight = computed(() => PORTRAIT_HEIGHT * portraitScale.value)
 // Shuffle a bag so all seven masks get used before any are repeated.
@@ -356,7 +386,7 @@ function compactLabelsForWheel(wheel: Wheel) {
     const [first = '', ...family] = nameForToken(token).trim().split(/\s+/)
     const lines = [first, family.join(' ')]
     lines[layout.line] = layout.before ? `${layout.arrow} ${lines[layout.line]}` : `${lines[layout.line]} ${layout.arrow}`
-    return [{ ...layout, x: wheel.x + layout.x, y: wheel.y + layout.y, slot, token, lines }]
+    return [{ ...layout, x: wheel.x + layout.x, y: wheel.y + layout.y - (!isMobile.value && slot === 1 ? 12 : 0), slot, token, lines }]
   })
 }
 
@@ -550,8 +580,8 @@ function normalizeNamePart(value: string) {
     .replace(/[^a-z]/gi, '')
 }
 
-function onPointerDown(wheelId: number, event: PointerEvent) {
-  if (isSnapping.value || dragPointerId !== null || isPinching || (event.pointerType === 'touch' && !event.isPrimary)) {
+function onPointerDown(wheelId: number, event: PointerEvent, token: number) {
+  if (event.button !== 0 || isSnapping.value || dragPointerId !== null || isPinching || (event.pointerType === 'touch' && !event.isPrimary)) {
     return
   }
 
@@ -563,6 +593,10 @@ function onPointerDown(wheelId: number, event: PointerEvent) {
 
   cancelSnap()
   dragPointerId = event.pointerId
+  pointerStart = { x: event.clientX, y: event.clientY }
+  movedPointer.value = false
+  suppressPortraitClick = false
+  portraitTapHref = personForToken(token).href ?? null
   activeWheelId.value = wheelId
   dragRotation.value = 0
   lastPointerAngle = angleFromPointer(wheelId, event)
@@ -580,6 +614,11 @@ function onPointerMove(event: PointerEvent) {
   }
 
   if (event.pointerId !== dragPointerId || isPinching) return
+  if (!movedPointer.value) {
+    if (Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) < 8) return
+    movedPointer.value = true
+    suppressPortraitClick = true
+  }
 
   const angle = angleFromPointer(activeWheelId.value, event)
   const delta = shortestAngleDelta(lastPointerAngle, angle)
@@ -607,6 +646,22 @@ function onPointerUp(event: PointerEvent) {
     return
   }
 
+  if (!movedPointer.value) {
+    const href = performance.now() - lastPointerTime < 500 ? portraitTapHref : null
+    portraitTapHref = null
+    suppressPortraitClick = true
+    activeWheelId.value = null
+    dragRotation.value = 0
+    angularVelocity = 0
+    if (svg?.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId)
+    if (href) {
+      if (event.ctrlKey || event.metaKey) window.open(href, '_blank', 'noopener')
+      else window.location.assign(href)
+    }
+    return
+  }
+
+  portraitTapHref = null
   snapActiveWheel()
 
   if (svg?.hasPointerCapture(event.pointerId)) {
@@ -614,7 +669,18 @@ function onPointerUp(event: PointerEvent) {
   }
 }
 
+function onPortraitClick(event: MouseEvent) {
+  if (isSnapping.value || isPinching || (event.detail !== 0 && suppressPortraitClick)) {
+    event.preventDefault()
+  }
+}
+
 function updateHoveredTokenFromPointer(event: PointerEvent) {
+  const nameLink = (event.target as Element)?.closest('[data-label-token]')
+  if (!isMobile.value && nameLink && activeWheelId.value === null && !isSnapping.value) {
+    setHoveredToken(Number(nameLink.getAttribute('data-label-token')))
+    return
+  }
   const point = clientPointToSvgPoint(event)
   const hoveredPortrait = [...visiblePortraits.value].reverse().find((portrait) => {
     return (
@@ -629,6 +695,18 @@ function updateHoveredTokenFromPointer(event: PointerEvent) {
   } else {
     clearHoveredToken()
   }
+}
+
+function onCompactLabelEnter(event: PointerEvent, token: number) {
+  if (!isMobile.value && event.pointerType !== 'touch' && activeWheelId.value === null && !isSnapping.value) setHoveredToken(token)
+}
+
+function onCompactLabelLeave(event: PointerEvent) {
+  if (!isMobile.value && event.pointerType !== 'touch') clearHoveredToken()
+}
+
+function onCompactLabelFocus(token: number) {
+  if (!isMobile.value && activeWheelId.value === null) setHoveredToken(token)
 }
 
 function cancelHoverRelease() {
@@ -920,6 +998,10 @@ onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', trackPointerDown, true)
   document.removeEventListener('pointerup', trackPointerEnd, true)
   document.removeEventListener('pointercancel', trackPointerEnd, true)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+  window.removeEventListener('blur', resetInterruptedGesture)
+  window.removeEventListener('pagehide', resetInterruptedGesture)
+  window.removeEventListener('pageshow', resetInterruptedGesture)
   mobileMedia.removeEventListener('change', updateMobile)
   cancelHoverRelease()
   cancelSnap()
@@ -942,6 +1024,7 @@ onBeforeUnmount(() => {
         @pointerup="onPointerUp"
         @pointercancel="onPointerUp"
         @lostpointercapture="onPointerUp"
+        @contextmenu="resetInterruptedGesture"
       >
       <defs>
         <clipPath
@@ -1016,7 +1099,7 @@ onBeforeUnmount(() => {
               :key="portrait.key"
               :transform="`translate(${portrait.x} ${portrait.y})`"
             >
-              <g>
+              <a :href="personForToken(portrait.token).href" :aria-label="nameForToken(portrait.token)" @click="onPortraitClick" @dragstart.prevent>
                 <path
                   class="multi-wheel-prototype__portrait-outline"
                   :class="{ 'multi-wheel-prototype__portrait-outline--active': hoveredToken === portrait.token }"
@@ -1039,16 +1122,25 @@ onBeforeUnmount(() => {
                   :clip-path="portrait.clipUrl"
                   preserveAspectRatio="xMidYMid slice"
                   draggable="false"
-                  @pointerdown.stop="onPointerDown(wheel.id, $event)"
+                  @pointerdown.stop="onPointerDown(wheel.id, $event, portrait.token)"
                 />
-              </g>
+              </a>
             </g>
           </g>
 
           <g v-if="props.compact" class="multi-wheel-prototype__compact-labels"
-            :class="{ 'multi-wheel-prototype__compact-labels--hidden': !labelsMeasured || activeWheelId === wheel.id || isSnapping }"
-            :aria-hidden="!labelsMeasured || activeWheelId === wheel.id || isSnapping">
-            <text v-for="label in compactLabelsForWheel(wheel)" :key="label.slot"
+            :class="{ 'multi-wheel-prototype__compact-labels--hidden': !labelsMeasured || (activeWheelId === wheel.id && movedPointer) || isSnapping }"
+            :aria-hidden="!labelsMeasured || (activeWheelId === wheel.id && movedPointer) || isSnapping">
+            <a v-for="label in compactLabelsForWheel(wheel)" :key="label.slot"
+              class="multi-wheel-prototype__compact-label-link"
+              :class="{ 'multi-wheel-prototype__compact-label-link--active': !isMobile && hoveredToken === label.token }"
+              :data-label-token="label.token"
+              :href="personForToken(label.token).href"
+              @pointerenter="onCompactLabelEnter($event,label.token)"
+              @pointerleave="onCompactLabelLeave"
+              @focus="onCompactLabelFocus(label.token)"
+              @blur="clearHoveredToken">
+            <text
               class="multi-wheel-prototype__compact-label"
               :data-slot="label.slot" :data-token="label.token"
               :style="{ fontSize: `${compactLabelFontSize}px` }"
@@ -1057,6 +1149,7 @@ onBeforeUnmount(() => {
               <tspan x="0" y="0">{{ label.lines[0] }}</tspan>
               <tspan x="0" :y="compactLabelFontSize * 1.15">{{ label.lines[1] }}</tspan>
             </text>
+            </a>
           </g>
 
           <g v-if="!props.compact" class="multi-wheel-prototype__initials">
@@ -1228,6 +1321,9 @@ onBeforeUnmount(() => {
   pointer-events: auto;
   touch-action: pinch-zoom;
   cursor: grab;
+  /* Keep the filtered SVG rendering path active between hover states, so
+     fractional portrait positions are rasterized consistently. */
+  filter: grayscale(0) brightness(1) contrast(1);
   transition: filter 360ms ease;
   user-select: none;
 }
@@ -1238,7 +1334,7 @@ onBeforeUnmount(() => {
 }
 
 .multi-wheel-prototype__portrait-image--active {
-  filter: none;
+  filter: grayscale(0) brightness(1) contrast(1);
   transition: filter 180ms ease;
 }
 
@@ -1299,8 +1395,8 @@ onBeforeUnmount(() => {
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: #292929;
-  color: #fff;
+  background: var(--panel-bg,#292929);
+  color: var(--text-color,#fff);
   cursor: pointer;
   font: inherit;
   font-size: 25px;
@@ -1309,13 +1405,13 @@ onBeforeUnmount(() => {
 
 @media (hover: hover) and (pointer: fine) {
   .multi-wheel-prototype__name-list-toggle:hover {
-  background: #606060;
+  background: var(--button-bg,#606060);
 }
 }
 
 .multi-wheel-prototype__name-list-toggle:focus-visible,
 .multi-wheel-prototype__name-button:focus-visible {
-  outline: 2px solid #aab9ff;
+  outline: 2px solid var(--link-hover,#aab9ff);
   outline-offset: 3px;
 }
 
@@ -1344,7 +1440,7 @@ onBeforeUnmount(() => {
   padding: 0;
   border: 0;
   background: transparent;
-  color: #fff;
+  color: var(--text-color,#fff);
   cursor: pointer;
   font: inherit;
   font-size: 14px;
@@ -1358,7 +1454,7 @@ onBeforeUnmount(() => {
 }
 
 .multi-wheel-prototype__name-button--active {
-  color: #aab9ff;
+  color: var(--link-hover,#aab9ff);
 }
 
 .multi-wheel-prototype__name-initials {
@@ -1403,7 +1499,16 @@ onBeforeUnmount(() => {
 }
 
 .multi-wheel-prototype__compact-labels { pointer-events: none; }
+.multi-wheel-prototype__compact-label-link { pointer-events:auto; cursor:pointer; touch-action:pan-y pinch-zoom; }
 .multi-wheel-prototype__compact-labels--hidden { visibility: hidden; }
+@media (min-width:681px) {
+  .multi-wheel-prototype__compact-label-link--active .multi-wheel-prototype__compact-label {
+    fill:var(--text-color,#fff);
+    text-decoration:underline;
+    text-underline-offset:3px;
+    text-decoration-thickness:1px;
+  }
+}
 .multi-wheel-prototype__compact-label {
   fill: #fff;
   font-family: var(--font-body);

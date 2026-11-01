@@ -1,5 +1,5 @@
 :root {
-  --patateur-fill: #1b1b1b;
+  --patateur-fill: var(--deep-surface,#1b1b1b);
 }
 
 .patateur-image-mask {

@@ -6,7 +6,7 @@ export default defineConfig({
   base: process.env.GITHUB_ACTIONS === "true" ? "/amiweb.demo/" : "/",
   build: {
     rollupOptions: {
-      input: { main: "index.html", maskLab: "mask-lab.html", footerLab: "footer-lab.html" },
+      input: { main: "index.html", maskLab: "mask-lab.html", footerLab: "footer-lab.html", desktopFooterLab: "desktop-footer-lab.html", calendarFilterLab: "calendar-filter-lab.html", internalLinksLab: "internal-links-lab.html" },
     },
   },
 })

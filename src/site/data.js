@@ -35,7 +35,7 @@ export function getProject(id = "tiret-du-six") {
 export const wheelPeople = [
   "Antoine Defoort", "Julien Fournet", "Sofia Teillet", "Samuel Hackwill",
   "Louise Siffert", "Joaquim Fossi", "Sébastien Vial",
-].map(name => ({ id: name, label: name, alt: name, src: portraitForPerson(name) }))
+].map(name => ({ id: name, label: name, alt: name, src: portraitForPerson(name), href: personHref(name) }))
 
 export const gallery = [
   { photo: "gallery-performance.jpg", caption: "Le Tiret du Six — sur scène", video: true },
@@ -51,15 +51,16 @@ function dayOffset(offset) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
 }
 const event = (id, project, city, venue, date, time = "19:00", extra = {}) => ({ id, project, city, venue, date, time, ...extra })
+const plaineEte = { address: "12 rue de Thumesnil, 59000 Lille", context: "dans le cadre du festival Plaine d’été" }
 export const events = [
   event("today", "un-faible-degre-originalite", "Valenciennes", "Le Phénix scène nationale", dayOffset(0), "18:30"),
   event("tomorrow", "un-faible-degre-originalite", "Valenciennes", "Le Phénix scène nationale", dayOffset(1), "18:30"),
   event("friday", "de-la-sexualite-des-orchidees", "Paris", "La Maison des métallos", dayOffset(3)),
   event("sauvez-1", "sauvez-vos-projets", "Amiens", "Maison de la Culture", `${year}-11-10`),
   event("sauvez-2", "sauvez-vos-projets", "Amiens", "Maison de la Culture", `${year}-11-10`, "20:00"),
-  event("vitesse-1", "vitesse-80", "Lille", "Festival Plaine d’été", `${year}-11-17`, "15:00"),
-  event("vitesse-2", "vitesse-80", "Lille", "Festival Plaine d’été", `${year}-11-18`, "17:30"),
-  event("vitesse-3", "vitesse-80", "Lille", "Festival Plaine d’été", `${year}-11-19`, "17:30"),
+  event("vitesse-1", "vitesse-80", "Lille", "Théâtre de l’Avant-Scène", `${year}-11-17`, "15:00", plaineEte),
+  event("vitesse-2", "vitesse-80", "Lille", "Théâtre de l’Avant-Scène", `${year}-11-18`, "17:30", plaineEte),
+  event("vitesse-3", "vitesse-80", "Lille", "Théâtre de l’Avant-Scène", `${year}-11-19`, "17:30", plaineEte),
   event("yoyo", "big-data-yoyo", "Villeneuve-d’Ascq", "La rose des vents", `${year}-11-21`),
   event("tryhard-1", "tryhard", "Grenoble", "La Cinémathèque de Grenoble", `${year}-12-02`, "18:00"),
   event("tryhard-2", "tryhard", "Grenoble", "La Cinémathèque de Grenoble", `${year}-12-02`, "20:00"),
@@ -69,7 +70,35 @@ export const events = [
   ...Array.from({ length: 6 }, (_, index) => event(`plaisir-${index}`, "le-plaisir-la-peur-et-le-triomphe", "Lyon", "Les SUBS", `${year}-12-${String(3 + index).padStart(2, "0")}`, index > 2 ? "15:30" : "20:00")),
   ...Array.from({ length: 6 }, (_, index) => event(`thermes-${index}`, "les-thermes", "Berlin", "HAU Hebbel am Ufer", `${year}-12-${25 + index}`, "09:00", { endTime: "18:00" })),
 ]
-export const archives = events.slice(0, 12).map((item, index) => ({ ...item, id: `archive-${index}`, date: `${year - 1}-07-${String(index + 10).padStart(2, "0")}` }))
+const archiveVenues = [...new Map(events.map(item => [`${item.city}:${item.venue}`, item])).values()]
+const firstDates = new Map(projectDates.projects.map(project => [project.id, project.firstDate]))
+function historyDate(index) {
+  const date = dayOffset(-(index < 14 ? index + 1 : 14 + (index - 13) * 3))
+  const eligible = allProjects.filter(project => !firstDates.get(project.id) || firstDates.get(project.id) <= date)
+  const project = eligible[index % eligible.length]
+  const venue = archiveVenues[index % archiveVenues.length]
+  return event(`archive-history-${index}`, project.id, venue.city, venue.venue, date, project.id === "les-thermes" ? "09:00" : ["15:00", "17:30", "19:00", "20:00"][index % 4], {
+    address: venue.address, context: venue.context, ...(project.id === "les-thermes" ? { endTime: "18:00" } : {}),
+  })
+}
+// Tiny initial preview and bio metadata. Full history is created only on demand.
+export const archivePreview = [historyDate(0), historyDate(1)]
+export const lastArchiveVenues = Object.fromEntries(Array.from({ length:14 }, (_, i) => historyDate(13 - i)).map(item => [item.project, item.venue]))
+export const archiveYears = [...new Set(["2021", ...Array.from({length:year - Number(dayOffset(-692).slice(0,4)) + 1}, (_, i) => String(year - i))])].sort().reverse()
+const seasonOf = date => Number(date.slice(0,4)) - (Number(date.slice(5,7)) < 9 ? 1 : 0)
+export const archiveSeasons = [...new Set([2020, 2021, ...Array.from({length:seasonOf(dayOffset(-1)) - seasonOf(dayOffset(-692)) + 1}, (_, i) => seasonOf(dayOffset(-1)) - i)])].sort((a,b) => b-a)
+export function createDemoArchives() {
+  return [
+    ...events.slice(0, 12).map((item, index) => ({ ...item, id:`archive-${index}`, date:`${year - 1}-07-${String(index + 10).padStart(2, "0")}` })),
+    ...Array.from({ length:240 }, (_, index) => historyDate(index)),
+    ...Array.from({ length:24 }, (_, index) => {
+      const date = `2021-${String(Math.floor(index / 2) + 1).padStart(2, "0")}-${index % 2 ? "22" : "08"}`
+      const eligible = allProjects.filter(project => firstDates.get(project.id) && firstDates.get(project.id) <= date)
+      const project = eligible[index % eligible.length], venue = archiveVenues[index % archiveVenues.length]
+      return event(`archive-2021-${index}`, project.id, venue.city, venue.venue, date)
+    }),
+  ]
+}
 
 export const posts = [
   { id: "des-projets-vivants", title: "Des projets vivants, et des nouvelles de l’Amicale", date: "22 octobre 2026", photo: "enfance.jpg", excerpt: "Quelques nouvelles des projets, des personnes et de tout ce qui se fabrique entre les deux." },

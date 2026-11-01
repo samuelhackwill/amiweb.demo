@@ -3,7 +3,7 @@ const files = [
   "antoine_defoort.jpg", "julien_fournet.jpg", "sofia_teillet.jpg",
   "samuel_hackwill.jpg", "louise_siffert.jpg", "Joaquim_Fossi.jpg",
   "sebastien_vial.jpg", "marion_le_guerroue.jpg", "thomas_riou.jpg",
-  "celestine_dahan.jpg", "kevin_defrennes.jpg", "Lorette_Moreau.jpg",
+  "celestine_dahan.jpg", "kevin_defrennes.jpg", "Lorette_Moreau.jpg", "marine_thevenet.jpg",
 ]
 const key = name => name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")
 const portraits = new Map(files.map(file => [key(file.replace(/\.jpg$/, "")), file]))

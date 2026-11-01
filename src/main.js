@@ -4,8 +4,18 @@ import { renderLamicalePage } from "./lamicale.js"
 import { patateurLabel, syncPatateurs, destroyPatateurs } from "./patateur/index.js"
 import { renderDemoPage } from "./site/pages.js"
 import { siteHeader, siteFooter, siteMenu, bindSiteInteractions } from "./site/shared.js"
+import { allProjects, events, lastArchiveVenues, projectHref, asset as siteAsset } from "./site/data.js"
+import { underlineProjectTitle } from "./site/project-underlines.js"
 import "./style.css"
+import "./site/desktop.css"
 import "./site/browser-colors.js"
+import "./site/theme.css"
+import "./site/internal-links.css"
+import "./site/faq.css"
+import "./site/email-links.css"
+import { initTheme } from "./site/theme.js"
+
+initTheme()
 
 const nameAssetFiles = import.meta.glob("./svg assets/name=*.svg", { query: "?raw", import: "default" })
 const normalizeName = (value) =>
@@ -113,9 +123,9 @@ const friseRoles = [
   { id: "regie", label: "Régie", color: "#55ef45", tier: 2 },
 ]
 const projectCatalog = [
-  { id: "tryhard", image: assetUrl("/assets/teye3.png"), title: assetUrl("/assets/project-title-tryhard.svg"), caption: "dates à venir à <strong>Grenoble</strong><br />et <strong>Saint-Médard en<br />Jalles.</strong>" },
-  { id: "cyber-cafe", image: assetUrl("/assets/teye4.png"), title: assetUrl("/assets/project-title-cyber.svg"), caption: "" },
-  { id: "tiret-du-six", image: assetUrl("/assets/teye2.png"), title: assetUrl("/assets/project-title-tiret.svg"), caption: "" },
+  { id: "tryhard", year: 2025, image: assetUrl("/assets/teye3.png"), title: assetUrl("/assets/project-title-tryhard.svg") },
+  { id: "cyber-cafe", year: 2024, image: assetUrl("/assets/teye4.png"), title: assetUrl("/assets/project-title-cyber.svg"), note: "Cette saison, on a joué aux Halles de Schaerbeek." },
+  { id: "tiret-du-six", year: 2021, image: assetUrl("/assets/teye2.png"), title: assetUrl("/assets/project-title-tiret.svg") },
 ]
 const projectOptions = [
   ["sauvez-vos-projets", "Sauvez vos projets"],
@@ -522,7 +532,72 @@ function rockPath(x1, x2, y, seed) {
   const mid = x1 + length * 0.49
   return `M ${x1} ${y} C ${x1 + length * 0.24} ${y + bendA} ${mid - length * 0.16} ${y - bendB} ${mid} ${y + bendB * 0.55} C ${mid + length * 0.16} ${y + bendA} ${x2 - length * 0.24} ${y - bendB} ${x2} ${y}`
 }
-function friseMarkup() {
+function projectPreviewNote(project, reference) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const upcoming = events.filter(event => event.project === project.id && new Date(`${event.date}T12:00:00`) >= today).sort((a, b) => a.date.localeCompare(b.date))
+  if (upcoming.length) {
+    const months = [...new Set(upcoming.map(event => new Intl.DateTimeFormat("fr-FR", { month: "long" }).format(new Date(`${event.date}T12:00:00`))))].slice(0, 3)
+    return `dates à venir en <strong>${escapeHtml(new Intl.ListFormat("fr-FR", { type: "conjunction" }).format(months))}</strong>.`
+  }
+  if (reference?.note) return escapeHtml(reference.note)
+  const lastVenue = lastArchiveVenues[project.id]
+  return lastVenue ? `La dernière fois, c’était à <strong>${escapeHtml(lastVenue)}</strong>.` : ""
+}
+
+function projectsMarkup() {
+  const selected = [...new Set(person.projects || [])]
+  return `<section class="bio-projects" data-project-selection="${escapeHtml(selected.join("|"))}" aria-label="Projets de ${escapeHtml(person.name)}"${selected.length ? "" : " hidden"}><h2 class="section-title bio-projects-heading" data-patateur="bio-projects-heading" data-patateur-wobble="3"><span>projets :</span></h2>${selected.map(id => {
+    const reference = projectCatalog.find(project => project.id === id)
+    const project = allProjects.find(project => project.id === id) || { id }
+    const date = projectDateData.projects.find(project => project.id === id)?.firstDate
+    const name = projectOptions.find(project => project.id === id)?.name || project.name || id
+    const year = reference?.year || (date ? date.slice(0, 4) : "")
+    const image = reference?.image || (project.photo ? siteAsset(project.photo) : "")
+    const title = reference?.title || project.titleUrl || (project.title ? siteAsset(project.title) : "")
+    const note = projectPreviewNote(project, reference)
+    const titleArtwork = title ? underlineProjectTitle(project, `<img class="bio-project-title-art" src="${escapeHtml(title)}" alt="${escapeHtml(name)}" loading="lazy" />`, { source:project.title || title, className:"bio-project-title-art", maxHeight:100 }) : ""
+    return `<article class="bio-project" data-bio-project="${escapeHtml(id)}"><a class="bio-project-image" href="${projectHref(id)}" aria-label="Découvrir ${escapeHtml(name)}"><span class="bio-project-mask" data-patateur-mask="bio-project-${escapeHtml(id)}" data-patateur-preset="project">${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(name)}" loading="lazy" />` : `<span class="bio-project-placeholder" aria-hidden="true">${escapeHtml(name.charAt(0))}</span>`}</span></a><div class="bio-project-copy"><h3><a href="${projectHref(id)}">${titleArtwork}<span class="bio-project-title-text${title ? " has-title-art" : ""}">${escapeHtml(name)}</span></a>${year ? ` <span class="bio-project-year">(${year})</span>` : ""}</h3>${note ? `<p>${note}</p>` : ""}</div></article>`
+  }).join("")}</section>`
+}
+
+let bioFriseResizeObserver
+function bioFrisePosition() {
+  const scroller = document.querySelector(".bio-frise-scroll")
+  return scroller ? { slug: scroller.dataset.person, entry: scroller.dataset.entryYear, left: scroller.scrollLeft } : null
+}
+function bindBioFrise(previousPosition) {
+  bioFriseResizeObserver?.disconnect()
+  const scroller = document.querySelector(".bio-frise-scroll")
+  if (!scroller) return
+  const sameEntry = previousPosition?.slug === scroller.dataset.person && previousPosition?.entry === scroller.dataset.entryYear
+  scroller.scrollLeft = sameEntry ? previousPosition.left : Number(scroller.dataset.initialScroll)
+  const updateEdges = () => {
+    scroller.style.setProperty("--bio-frise-fade-left", scroller.scrollLeft > 1 ? "20px" : "0px")
+    scroller.style.setProperty("--bio-frise-fade-right", scroller.scrollWidth - scroller.clientWidth - scroller.scrollLeft > 1 ? "20px" : "0px")
+  }
+  scroller.addEventListener("scroll", updateEdges, { passive: true })
+  const fitTimeline = () => {
+    const mobile = matchMedia("(max-width:680px)").matches
+    const svg = scroller.querySelector(".bio-frise-svg")
+    const width = Math.max(560, scroller.clientWidth)
+    if (svg.dataset.layout !== (mobile ? "mobile" : "desktop") || (!mobile && Math.abs(Number(svg.getAttribute("width")) - width) > 1)) {
+      const replacement = document.createElement("div")
+      replacement.innerHTML = friseMarkup(scroller.clientWidth)
+      const nextScroller = replacement.querySelector(".bio-frise-scroll")
+      svg.replaceWith(nextScroller.querySelector(".bio-frise-svg"))
+      scroller.dataset.initialScroll = nextScroller.dataset.initialScroll
+      scroller.scrollLeft = mobile ? Number(nextScroller.dataset.initialScroll) : 0
+      bindCreationTooltips()
+    }
+    updateEdges()
+  }
+  bioFriseResizeObserver = new ResizeObserver(fitTimeline)
+  bioFriseResizeObserver.observe(scroller)
+  fitTimeline()
+}
+
+function friseMarkup(availableWidth) {
   const timeline = person.timeline
   const now = currentYear()
   const selectedProjectIds = new Set(person.projects)
@@ -539,16 +614,19 @@ function friseMarkup() {
   const startYear = Math.min(FRISE_START_YEAR, ...creationYears.map(Math.floor))
   const endYear = Math.ceil(Math.max(now, startYear + 3, ...timeline.periods.map((period) => period.end ?? now), ...creationYears))
   const marginLeft = 18
-  const layoutViewportWidth = window.innerWidth / 1.3
-  const width = Math.max(280, Math.min(938, layoutViewportWidth - (layoutViewportWidth <= 800 ? 40 : 62)))
   const marginRight = 20
+  const mobile = matchMedia("(max-width:680px)").matches
+  const estimatedWidth = Math.min(1000, window.innerWidth / 1.3) - (window.innerWidth <= 1040 ? 40 : 62)
+  const width = mobile ? marginLeft + (endYear - startYear) * 112 + marginRight : Math.max(560, availableWidth ?? estimatedWidth)
   const scale = (width - marginLeft - marginRight) / (endYear - startYear)
   const height = 126
   const y = 79
   const x = (year) => marginLeft + (year - startYear) * scale
+  const firstRole = timeline.periods.length ? Math.min(...timeline.periods.map(period => period.start)) : startYear
+  const initialScroll = mobile ? Math.max(0, x(Math.max(startYear, Math.min(endYear, firstRole))) - 72) : 0
   const creationPositions = spaceCreationMarkers(creations, x)
   const ticks = []
-  for (let year = Math.ceil(startYear / 5) * 5; year <= endYear; year += 5) ticks.push(year)
+  for (let year = startYear; year <= endYear; year += 2) ticks.push(year)
   if (!ticks.includes(now)) ticks.push(now)
   ticks.sort((a, b) => a - b)
   const grid = ticks
@@ -593,16 +671,30 @@ function friseMarkup() {
     })
     .join("")
   const legend = friseRoles.map((role) => `<span class="frise-legend-item"><i style="--role-color:${role.color}"></i>${escapeHtml(role.label)}</span>`).join("")
-  return `<section class="bio-frise" aria-label="Frise du parcours de ${escapeHtml(person.name)}"><div class="bio-frise-heading"><h2>Parcours à l’Amicale</h2><span>${escapeHtml(person.name)}</span></div><div class="bio-frise-scroll"><svg class="bio-frise-svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Frise du parcours de ${escapeHtml(person.name)} de ${startYear} à ${now}"><defs>${clips}</defs>${grid}${periodPaths}${stars}</svg></div><div class="bio-frise-legend">${legend}<span class="frise-legend-item"><svg class="frise-star" viewBox="0 0 16 16" aria-hidden="true"><path d="${starPath(8, 8, 7, 3.4, 6)}" fill="#fff" /></svg>Création</span></div></section>`
+  return `<section class="bio-frise" aria-label="Frise du parcours de ${escapeHtml(person.name)}"><div class="bio-frise-heading"><h2 class="section-title" data-patateur="bio-parcours-heading" data-patateur-wobble="3"><span>parcours à l’amicale :</span></h2></div><div class="bio-frise-scroll" data-person="${escapeHtml(person.slug)}" data-entry-year="${firstRole}" data-initial-scroll="${initialScroll}" tabindex="0" role="region" aria-label="Parcours de ${escapeHtml(person.name)}, faites défiler vers la gauche ou la droite"><svg class="bio-frise-svg" data-layout="${mobile ? "mobile" : "desktop"}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Frise du parcours de ${escapeHtml(person.name)} de ${startYear} à ${now}"><defs>${clips}</defs>${grid}${periodPaths}${stars}</svg></div><div class="bio-frise-legend">${legend}<span class="frise-legend-item"><svg class="frise-star" viewBox="0 0 16 16" aria-hidden="true"><path d="${starPath(8, 8, 7, 3.4, 6)}" fill="#fff" /></svg>Création</span></div></section>`
 }
 function faqMarkup() {
   return person.faq.map(([question, answer]) => `<details><summary>↓ ${escapeHtml(question)}</summary><div class="faq-answer">${renderMarkdown(answer)}</div></details>`).join("")
 }
+const bioFaqLayout = matchMedia("(min-width:681px)")
+function placeBioFaq() {
+  const faq = document.querySelector(".bio-page .faq-section")
+  if (!faq) return
+  if (bioFaqLayout.matches) {
+    const intro = document.querySelector(".bio-page .intro")
+    intro.insertBefore(faq, intro.querySelector(".bio-projects"))
+  } else {
+    const sidebar = document.querySelector(".bio-page .sidebar")
+    sidebar.insertBefore(faq, sidebar.querySelector(".contact"))
+  }
+}
+bioFaqLayout.addEventListener("change", placeBioFaq)
+if (import.meta.hot) import.meta.hot.dispose(() => bioFaqLayout.removeEventListener("change", placeBioFaq))
 function contactMarkup() {
   return person.contact.map(([label, href]) => link(`✉ ${escapeHtml(label)}`, href)).join("")
 }
 function linksMarkup() {
-  return person.links.map(([label, href]) => link(`↗ ${escapeHtml(label)}`, href)).join("")
+  return person.links.map(([label, href]) => link(`↗ ${escapeHtml(label)}`, href)).join("")
 }
 function refreshVisibleContent() {
   const bio = document.querySelector(".bio")
@@ -619,12 +711,20 @@ function refreshVisibleContent() {
   const sideSections = document.querySelectorAll(".sidebar .side-section.contact")
   if (sideSections[0]) sideSections[0].innerHTML = `${patateurLabel("contact :", "bio-contact", "section-title wide")}${contactMarkup()}`
   if (sideSections[1]) sideSections[1].innerHTML = `${patateurLabel("liens :", "bio-links")}${linksMarkup()}`
-  syncPatateurs()
+  const projectPreviews = document.querySelector(".bio-projects")
+  if (projectPreviews) {
+    const selection = [...new Set(person.projects || [])].join("|")
+    if (projectPreviews.dataset.projectSelection !== selection) projectPreviews.outerHTML = projectsMarkup()
+    else projectPreviews.setAttribute("aria-label", `Projets de ${person.name}`)
+  }
   const frise = document.querySelector(".bio-frise")
   if (frise) {
+    const previousPosition = bioFrisePosition()
     frise.outerHTML = friseMarkup()
+    bindBioFrise(previousPosition)
     bindCreationTooltips()
   }
+  syncPatateurs()
   document.querySelectorAll(".link").forEach((anchor) => anchor.addEventListener("click", (event) => {
     if (anchor.getAttribute("href") === "#") event.preventDefault()
   }))
@@ -632,6 +732,8 @@ function refreshVisibleContent() {
 
 function bindCreationTooltips() {
   document.querySelectorAll(".creation-marker").forEach((marker) => {
+    if (marker.dataset.tooltipBound) return
+    marker.dataset.tooltipBound = "true"
     const showTooltip = () => {
       const name = marker.dataset.projectName
       const title = document.createElement("strong")
@@ -674,11 +776,11 @@ function editorMarkup() {
 }
 
 function pageMarkup() {
-  return `<div class="page">${siteHeader({ active: "amicale", crumb: person.name })}
-    <div class="body-content"><section class="intro" id="amicale"><div class="identity"><div class="logo-stack"><img class="logo-art" src="${assetUrl("/assets/logo.png")}" alt="L’Amicale" /></div>${imageMarkup()}</div><div class="bio">${renderMarkdown(person.bio)}</div></section>
+  return `<div class="page bio-page">${siteHeader({ active: "amicale", crumb: person.name })}
+    <div class="body-content"><section class="intro" id="amicale"><div class="identity"><div class="logo-stack"><img class="logo-art" src="${assetUrl("/assets/logo.png")}" alt="L’Amicale" /></div>${imageMarkup()}</div><div class="bio">${renderMarkdown(person.bio)}</div>${projectsMarkup()}</section>
     <aside class="sidebar">${portraitMarkup()}<section class="side-section faq-section"${person.showFaq ? "" : " hidden"}>${patateurLabel("FAQ :", "bio-faq")}<div class="faq-list">${faqMarkup()}</div></section><section class="side-section contact">${patateurLabel("contact :", "bio-contact", "section-title wide")}${contactMarkup()}</section><section class="side-section contact links-section">${patateurLabel("liens :", "bio-links")}${linksMarkup()}</section></aside>
     ${friseMarkup()}</div>
-    ${siteFooter()}
+    ${siteFooter({ newsletter: false, variant: "bio" })}
     ${editAccessMessage ? `<p class="edit-access-message" role="status">${escapeHtml(editAccessMessage)}</p>` : ""}${editAuthorized ? `<button class="editor-tab${editorOpen ? " is-open" : ""}" type="button" aria-label="${editorOpen ? "Fermer l’éditeur" : "Éditer la page"}" aria-expanded="${editorOpen}">Éditer la page</button><aside class="editor-panel ${editorOpen ? "is-open" : ""}" aria-hidden="${!editorOpen}">${editorMarkup()}</aside>` : ""}${siteMenu()}</div>`
 }
 
@@ -694,12 +796,15 @@ function render() {
     return
   }
   document.title = `${person.name} — L’Amicale`
+  const previousPosition = bioFrisePosition()
   destroyPatateurs()
   document.querySelector("#app").innerHTML = pageMarkup()
+  placeBioFaq()
   syncPatateurs()
   bindEvents()
   bindSiteInteractions(document.querySelector("#app"))
   bindCreationTooltips()
+  bindBioFrise(previousPosition)
   bindNameAssetInlining()
 }
 function rerenderEditor() {

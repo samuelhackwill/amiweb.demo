@@ -74,7 +74,9 @@ function destroyMask(instance) {
 
 // Called after page renders and instant-preview updates. Existing elements keep
 // their decoration; removed ones release their observers before replacement.
-export function syncPatateurs(root = document.querySelector("#app")) {
+// A narrower scanRoot registers only new content (e.g. a calendar drawer),
+// while cleanup still considers the whole page. Null performs cleanup only.
+export function syncPatateurs(root = document.querySelector("#app"), { scanRoot = root } = {}) {
   for (const [element, controller] of decorations) {
     if (!root.contains(element)) {
       controller.destroy()
@@ -84,11 +86,11 @@ export function syncPatateurs(root = document.querySelector("#app")) {
   for (const [element, instance] of masks) {
     if (!root.contains(element)) destroyMask(instance)
   }
-  root.querySelectorAll("[data-patateur]").forEach((element) => {
+  scanRoot?.querySelectorAll("[data-patateur]").forEach((element) => {
     const controller = decoratePatateur(element, optionsFor(element, element.dataset.patateur))
     decorations.set(element, controller)
   })
-  root.querySelectorAll("[data-patateur-mask]").forEach((element) => {
+  scanRoot?.querySelectorAll("[data-patateur-mask]").forEach((element) => {
     let instance = masks.get(element)
     if (!instance) {
       instance = { element, lastKey: null }

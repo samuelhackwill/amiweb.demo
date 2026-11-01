@@ -1,0 +1,20 @@
+/* One email/contact treatment across every page, theme and viewport. */
+:root { --email-color:#fff; --email-hover:#aab9ff; }
+html[data-theme="light"] { --email-color:#000; }
+#app a[href^="mailto:" i],
+#app .project-contact-link {
+  color:var(--email-color);
+  text-decoration:none;
+}
+#app a[href^="mailto:" i]:focus-visible,
+#app .project-contact-link:focus-visible {
+  color:var(--email-hover);
+  text-decoration:none;
+}
+@media (hover:hover) and (pointer:fine) {
+  #app a[href^="mailto:" i]:hover,
+  #app .project-contact-link:hover {
+    color:var(--email-hover);
+    text-decoration:none;
+  }
+}

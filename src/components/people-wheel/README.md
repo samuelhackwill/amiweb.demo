@@ -4,7 +4,7 @@ Adapted directly from [`MultiWheelPrototype.vue`](https://github.com/samuelhackw
 
 The POC owns the shared portrait slots between adjacent wheels, drag handling, upright portraits, release inertia, snapping, token transfers, and portrait/name hover highlights. Keep those functions in sync when bringing in future POC changes.
 
-Integration changes: use the supplied people array for the roster and wheel count, remove the demo count controls and generated names, adapt colours and the name directory to the page. Vue is mounted only in the people-wheel container by `lamicale.js`; the rest of the site keeps its existing rendering.
+Integration changes: use the supplied people array for the roster and wheel count, remove the demo count controls and generated names, adapt colours and the name directory to the page. Vue is mounted in the people-wheel containers by `lamicale.js` and `site/pages.js`; the rest of the site keeps its existing rendering. The desktop homepage reuses the same compact wheel as mobile; the project sidebar hides its small text labels.
 
 Portrait shapes use the filled paths from the seven supplied `Vector 1935.svg`–`Vector 1941.svg` files. A shuffled bag assigns a random mask to each person, reusing shapes only after the bag is exhausted. Assignments stay stable during dragging and resizing. Masks retain their original proportions. The clip and hover outline share the generated path. Portrait clips use `userSpaceOnUse` with the same explicit coordinates as their outlines. The POC's `objectBoundingBox` clips become offset in Firefox when the page's CSS zoom is applied.
 
@@ -12,7 +12,9 @@ Pointer positions are mapped from the displayed SVG rectangle into its viewBox. 
 
 Wheel dragging starts only on the clipped portrait images (`touch-action: pinch-zoom`). The SVG allows vertical panning and pinch zoom, so touches on the ring or gaps scroll the page. Pointer capture keeps an active portrait drag working after the finger leaves its image.
 
-Compact wheel labels follow the mobile Figma layout (`3239:15149`): fixed slot offsets, alignment and arrow placement in `compactLabelSlots`. The complete label layer is hidden for the active drag and inertia/snap. The existing POC `commitWheelRotation` reassigns tokens to slots before labels reappear; text positions never rotate with the wheel.
+Portraits and compact names are native SVG links using each item's bio URL. Pointer capture starts immediately on portrait touch, as in the POC. Movement of at least 8px starts rotation; a tap navigates on pointer release because capture retargets the native click to the SVG. Native portrait link dragging is disabled. A context menu, page blur/hide or return cancels any pending gesture without blocking the browser preview. A new primary press clears stale touch state if the preview swallowed release events. Holds of 500ms or more do not navigate on release. Dragging, snapping and pinch cancellation suppress portrait clicks, while keyboard link activation remains available.
+
+Compact wheel labels follow the mobile Figma layout (`3239:15149`): fixed slot offsets, alignment and arrow placement in `compactLabelSlots`. The complete label layer hides only after actual drag movement and during inertia/snap. A stationary press or long-press preview keeps labels visible. The existing POC `commitWheelRotation` reassigns tokens to slots before labels reappear; text positions never rotate with the wheel.
 
 Portrait identity is shared through `src/data/people-portraits.js`, using the renamed files in `public/assets/amicale`. The old `face-*` copies are no longer used for wheel identity. Unidentified roster photos use a neutral placeholder instead of another person’s portrait. Compact label offsets and straight-arrow placement follow the updated Figma capture (22 October 2026).
 
